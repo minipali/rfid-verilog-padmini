@@ -88,7 +88,6 @@ module controller (reset, clk, rx_overflow, rx_cmd, currentrn, currenthandle,
   output rx_en, tx_en, docrc; // current_mode 0: rx mode, 1: tx mode
   output [1:0] bitsrcselect;
   input [7:0] readwriteptr;
-  output readfrommsp;
   input use_q;
   input [3:0] rx_q;
   input [2:0] rx_updn;
