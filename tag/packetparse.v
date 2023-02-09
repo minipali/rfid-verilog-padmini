@@ -30,7 +30,7 @@ module packetparse(reset, bitin, bitinclk, packettype, //inputs
                    rx_q, sel, rx_updn,
                    currenthandle, currentrn, //inputs as well
                    handlematch, readwritebank, readwriteptr, readwords,
-                   writedataout, writedataclk,
+                   writedataout, epc_data_ready,// writedataclk,
                    /// for transmit clk, need calibrate, freq select and rforb - will send to controller
                    pllenab, freq_channel, rfob,
                    //// for sample sens data
@@ -41,6 +41,7 @@ module packetparse(reset, bitin, bitinclk, packettype, //inputs
                    bf_dur,
                    //select
                    sel_target, sel_action, sel_ptr, mask, truncate);
+
                    
 //7 inputs
 input reset, bitin, bitinclk;
@@ -82,7 +83,9 @@ output [1:0] readwritebank; //which memory bank to read from, if read. or write 
 output [7:0] readwriteptr; //first word pointer
 output [7:0] readwords;//number of words to read
 output [15:0] writedataout; 
-output writedataclk; //parses the write data, which is included in the packet, if its a write command
+output wire epc_data_ready;
+
+//output writedataclk; //parses the write data, which is included in the packet, if its a write command
 
 //*//crc check bit - 1 if crc checks out
 //for crc5 - query, rest all crc16. Say checking for req_rn first
@@ -118,7 +121,7 @@ reg       datadone;
 reg       seldone;
        
 
- 
+assign epc_data_ready = datadone;
 
 assign writedataclk = bitinclk & writedataengated;
 
@@ -170,6 +173,8 @@ always @ (negedge bitinclk or posedge reset) begin
     writedataengated <= writedataen; // by gated, just mean shifted a little earlier to avoid glitches cus of prop delay
   end
 end
+
+
 
 always @ (posedge bitinclk or posedge reset) begin
   if (reset) begin
