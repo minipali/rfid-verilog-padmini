@@ -24,8 +24,8 @@
 //    and WRITE (response to WRITE packet).
 
     module top(reset, clk, demodin, modout, // regular IO
-           adc_sample_ctl, adc_sample_clk, adc_sample_datain,
-           writedataout, writedataclk, 
+           writedataout, epc_data_ready,
+           readwritebank, readwriteptr, readwords, membitclk, membitsrc, memdatadone, 
            use_q, comm_enable, tx_enable,
            debug_clk, debug_out,
            rx_cmd,
@@ -39,7 +39,7 @@
            calibration_control,
            //select
            sel_target, sel_action, sel_ptr, mask,
-           sl_flag);
+           sl_flag, packet_complete);
 
   // Regular IO
   // Oscillator input, master reset, demodulator input
@@ -54,12 +54,12 @@
   // EPC ID source, uid removed
 
   // ADC connections
-  input  adc_sample_datain;
-  output adc_sample_clk, adc_sample_ctl;
+  wire  adc_sample_datain;
+  wire adc_sample_clk, adc_sample_ctl;
 
   
   output [15:0] writedataout; 
-  output writedataclk;
+  output epc_data_ready;
 
   // Debugging IO
   input  debug_clk;
@@ -114,21 +114,22 @@
 
   // PACKET PARSE module connections
   wire       handlematch;
-  wire [1:0] readwritebank;//use for read, write, select
-  wire [7:0] readwriteptr; //read write
-  wire [7:0] readwords; //read
+  output wire [1:0] readwritebank;//use for read, write, select
+  output wire [7:0] readwriteptr; //read write
+  output wire [7:0] readwords; //read
   wire [15:0] writedataout;
-  wire writedataclk; //write
+  //wire writedataclk; //write
   wire [3:0] rx_q;//query
   wire [1:0] sel;
   wire [2:0] rx_updn;//queryadj
    
 
   // CMDPARSE module connections
-  wire packet_complete, cmd_complete;
+  output wire packet_complete;
+  wire cmd_complete;
   output wire [12:0] rx_cmd;
       //crc5, crc16 checks
-      wire crc5invalid, crc16invalid;
+  wire crc5invalid, crc16invalid;
 
   // TX module connections
   wire tx_reset, txsetupdone, tx_done;
@@ -150,7 +151,8 @@
   assign rngbitinclk = bitclk & (rx_cmd[2] | rx_cmd[3] | (rx_cmd[6] & handlematch));
 
   // TX module connections
-  wire txbitclk, txbitsrc, txdatadone;
+  wire txbitsrc, txdatadone;
+  wire txbitclk;
   
   /*************************************************************/  
   //tx_enable - output that is the enable signal for transmission  
@@ -176,42 +178,59 @@
 
 
   // mux the bit source for the tx module, uidbitsrc removed, so 2:0 instead of 3:0
-  wire [2:0] bitsrc;
-  wire rngbitsrc, epcbitsrc, readbitsrc;
+//  wire [2:0] bitsrc;
+//  wire rngbitsrc, epcbitsrc, readbitsrc;
+//  assign bitsrc[0] = rngbitsrc;
+//  assign bitsrc[1] = epcbitsrc;
+//  assign bitsrc[2] = readbitsrc;
+//  assign txbitsrc  = bitsrc[bitsrcselect];
+  wire [1:0] bitsrc;
+  wire rngbitsrc;
+  input wire membitsrc;
   assign bitsrc[0] = rngbitsrc;
-  assign bitsrc[1] = epcbitsrc;
-  assign bitsrc[2] = readbitsrc;
-  assign txbitsrc  = bitsrc[bitsrcselect];
+  assign bitsrc[1] = membitsrc;
+  assign txbitsrc  = bitsrc[bitsrcselect[0] || bitsrcselect[1]];
+  
+  
 
   // mux control for data source done flag, uidddatadone removed
-  wire [2:0] datadone;
-  wire rngdatadone, epcdatadone, readdatadone;
+//  wire [2:0] datadone;
+//  wire rngdatadone, epcdatadone, readdatadone;
+//  assign datadone[0] = rngdatadone;
+//  assign datadone[1] = epcdatadone;
+//  assign datadone[2] = readdatadone;
+//  assign txdatadone  = datadone[bitsrcselect];
+   wire [1:0] datadone;
+  wire rngdatadone;
+  input wire memdatadone;
   assign datadone[0] = rngdatadone;
-  assign datadone[1] = epcdatadone;
-  assign datadone[2] = readdatadone;
- 
-  assign txdatadone  = datadone[bitsrcselect];
+  assign datadone[1] = memdatadone;
+  assign txdatadone  = datadone[bitsrcselect[0] || bitsrcselect[1]];
 
   // mux control for tx data clock, uidbitclk removed
-  wire   rngbitclk, epcbitclk, readbitclk;
+//  wire   rngbitclk, epcbitclk, readbitclk;
+//  assign rngbitclk  = (bitsrcselect == BITSRC_RNG ) ? txbitclk : 1'b0;
+//  assign epcbitclk  = (bitsrcselect == BITSRC_EPC ) ? txbitclk : 1'b0;
+//  assign readbitclk = (bitsrcselect == BITSRC_READ) ? txbitclk : 1'b0;
+  wire   rngbitclk;
+  output wire membitclk;
   assign rngbitclk  = (bitsrcselect == BITSRC_RNG ) ? txbitclk : 1'b0;
-  assign epcbitclk  = (bitsrcselect == BITSRC_EPC ) ? txbitclk : 1'b0;
-  assign readbitclk = (bitsrcselect == BITSRC_READ) ? txbitclk : 1'b0;
+  assign membitclk  = (bitsrcselect == BITSRC_EPC || bitsrcselect == BITSRC_READ) ? txbitclk : 1'b0;
   
 
 /*************Connections we don't need- adc or msp340************/
   // MUX connection from READ to MSP or ADC
-  wire readfrommsp;
-  wire readfromadc = !readfrommsp;
-  wire read_sample_ctl, read_sample_clk, read_sample_datain;
+//  wire readfrommsp;
+//  wire readfromadc = !readfrommsp;
+//  wire read_sample_ctl, read_sample_clk, read_sample_datain;
 
   // ADC connections
-  assign adc_sample_ctl     = read_sample_ctl    & readfromadc;
-  assign adc_sample_clk     = read_sample_clk    & readfromadc;
+//  assign adc_sample_ctl     = read_sample_ctl    & readfromadc;
+//  assign adc_sample_clk     = read_sample_clk    & readfromadc;
 
   // MSP430 connections, removed 
   
-  assign read_sample_datain = adc_sample_datain;
+//  assign read_sample_datain = adc_sample_datain;
 /*******************************************************************/
 
 
@@ -223,7 +242,9 @@
       debug_address <= 4'd0;
     end else begin
       //debug_address <= debug_address + 4'd1;
-      debug_address <= 4'd11;
+      
+/*********CHANGE DEBUG ADDRESS HERE TO VIEW *********/
+      debug_address <= 4'd5; 
     end
   end
   always @ (debug_clk) begin // always @ (debug_address) begin // --> there initially
@@ -250,7 +271,6 @@
   
   //for cdr circuit
   wire preamble_indicator;
-  
   reg ext_packetcomplete;
   assign calibration_control = ~(ext_packetcomplete);
     
@@ -266,7 +286,7 @@
   controller U_CTL (reset, clk, rx_overflow, rx_cmd, currentrn, currenthandle,
                     packet_complete, txsetupdone, tx_done, 
                     rx_en, tx_en, docrc, handlematch,
-                    bitsrcselect, readfrommsp, readwriteptr, rx_q, rx_updn,
+                    bitsrcselect, readwriteptr, rx_q, rx_updn,
                     use_q, comm_enable,
                     ///
                     plloff,
@@ -285,7 +305,7 @@
   packetparse U_PRSE (rx_reset, bitout, bitclk, rx_cmd, rx_q, sel, rx_updn,
                       currenthandle, currentrn, handlematch,
                       readwritebank, readwriteptr, readwords,
-                      writedataout, writedataclk,
+                      writedataout, epc_data_ready,// writedataclk,
                       /// trns
                       pllenab, freq_channel,rforbase,
                       //// sampsens
@@ -299,11 +319,16 @@
   rng       U_RNG  (tx_reset, reset, rngbitin, rngbitinclk, rngbitclk, rngbitsrc, rngdatadone, currentrn);
   
   
-    epc_linemem       U_EPC  (tx_reset, epcbitclk, epcbitsrc, epcdatadone);
+  //epc_linemem       U_EPC  (tx_reset, epcbitclk, epcbitsrc, epcdatadone);
   
-  read      U_READ (tx_reset, readbitclk, readbitsrc, readdatadone, 
-                    read_sample_ctl, read_sample_clk, read_sample_datain, 
-                    currenthandle);
+//module read(reset, readbitclk, readbitout, readbitdone, 
+//           read_sample_ctl, read_sample_clk, read_sample_datain, 
+//           handle);
+//  read      U_READ (tx_reset, readbitclk, readbitsrc, readdatadone, 
+//                    read_sample_ctl, read_sample_clk, read_sample_datain, 
+//                    currenthandle);
+                    
+
                     
                     
   //uid removed
