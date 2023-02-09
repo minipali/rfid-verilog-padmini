@@ -50,7 +50,7 @@
 module controller (reset, clk, rx_overflow, rx_cmd, currentrn, currenthandle,
                    packet_complete, txsetupdone, tx_done, 
                    rx_en, tx_en, docrc, handlematch,
-                   bitsrcselect, readfrommsp, readwriteptr, rx_q, rx_updn,
+                   bitsrcselect, readwriteptr, rx_q, rx_updn,
                    use_q, comm_enable,
                    ///
                    plloff,
