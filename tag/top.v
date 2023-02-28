@@ -1,6 +1,5 @@
 ///modified code
 
-
 // Top level which connects all the top-level functional blocks.
 // Copyright 2010 University of Washington
 // License: http://creativecommons.org/licenses/by/3.0/
@@ -121,6 +120,7 @@
   //wire writedataclk; //write
   wire [3:0] rx_q;//query
   wire [1:0] sel;
+  
   wire [2:0] rx_updn;//queryadj
    
 
@@ -244,7 +244,7 @@
       //debug_address <= debug_address + 4'd1;
       
 /*********CHANGE DEBUG ADDRESS HERE TO VIEW *********/
-      debug_address <= 4'd5; 
+      debug_address <= 4'd7; 
     end
   end
   always @ (debug_clk) begin // always @ (debug_address) begin // --> there initially
@@ -270,15 +270,10 @@
   end
   
   //for cdr circuit
-  wire preamble_indicator;
-  reg ext_packetcomplete;
-  assign calibration_control = ~(ext_packetcomplete);
-    
-  always@(posedge packet_complete or posedge preamble_indicator) begin
-    if(preamble_indicator == 0) begin
-        ext_packetcomplete <= 1;
-    end else ext_packetcomplete <= 0;
-  end
+  
+  wire calctrl_posedge;
+  assign calibration_control = (packet_complete) ? 0: (calctrl_posedge);
+
   
 
 /******************** MODULES! :)********************/
@@ -297,7 +292,7 @@
   txsettings U_SET (reset, trcal_in,  m_in,  dr_in,  trext_in, query_complete,
                            trcal_out, m_out, dr_out, trext_out);
 
-  rx        U_RX  (rx_reset, clk, demodin, bitout, bitclk, rx_overflow, trcal_in, rngbitin, preamble_indicator);
+  rx        U_RX  (rx_reset, clk, demodin, bitout, bitclk, rx_overflow, trcal_in, rngbitin, calctrl_posedge);
   
   cmdparser U_CMD (rxtop_reset, clk, bitout, bitclk, rx_cmd, packet_complete, cmd_complete,
                    m_in, trext_in, dr_in, crc5invalid, crc16invalid);
