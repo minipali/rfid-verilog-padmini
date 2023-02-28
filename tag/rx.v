@@ -12,12 +12,12 @@
 // RT cal for debugging purposes and possibly adjustment
 //   of oscillator frequency if necessary.
 
-module rx (reset, clk, demodin, bitout, bitclk, rx_overflow_reset, trcal, rngbitout, preamble_indicator);
+module rx (reset, clk, demodin, bitout, bitclk, rx_overflow_reset, trcal, rngbitout, calibration_control);
 
   input reset, clk, demodin;
   output bitout, bitclk, rx_overflow_reset, rngbitout;
   output [9:0] trcal;
-  output reg preamble_indicator;
+  output reg calibration_control;
 
   reg bitout, bitclk, rngbitout;
   reg [9:0] trcal, rtcal;
@@ -67,7 +67,7 @@ if( reset ) begin
     commstate <= STATE_DELIMITER; //will be in delimiter state initially
     evalstate <= STATE_WAIT_DEMOD_LOW; 
     
-    preamble_indicator <= 0;
+    calibration_control <= 0;
 // process normal operation
 end else begin
 
@@ -78,7 +78,6 @@ end else begin
       else begin
         counterenable <= 0;
         ///
-        preamble_indicator <= 1;
       end
       
       counterreset <= 0;
@@ -112,7 +111,7 @@ end else begin
         commstate <= STATE_TRCAL;
       end
       STATE_TRCAL: begin
-        preamble_indicator <= 0;
+        calibration_control <= 1;
         
         if(count > rtcal) begin
           trcal  <= count;
