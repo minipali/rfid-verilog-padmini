@@ -222,26 +222,30 @@ always @ (posedge bitinclk or posedge reset) begin
   end else begin
     case(packettype)
       QUERY: begin
-        //basically, first 8 bits are already read. ptr is just to indicate that 8 bit word was read.
-        //Also, 4 bits have already been pushed into packet parser, but packettype had not beenreceived by then
-        //So, thats where first 4 bits are going
-        if(!seldone) begin
+        if(!ptrdone) begin
+        
+            if (bitincounter >= 3) begin  // ptr done, bit counter is for 9 bits long(0 to 8)
+                ptrdone      <= 1;
+                bitincounter <= 0;
+            end else begin
+               bitincounter <= bitincounter + 6'd1;
+            end
+        end 
+        else if (!seldone) begin
             if(bitincounter ==0 ) begin
                 bitincounter <= bitincounter + 6'd1;
                 sel[1] <= bitin;
             end else if (bitincounter ==1) begin
-                bitincounter <= 0;
+                bitincounter <= bitincounter + 6'd1;
                 sel[0] <= bitin;
-                seldone <= 1;
+            end else if (bitincounter >= 2) begin
+                if(bitincounter == 4) begin
+                    bitincounter <= 0;
+                    seldone <= 1;
+                end
+                else bitincounter <= bitincounter + 6'd1;
             end
-        end 
-        else if (!ptrdone) begin
-          if (bitincounter >= 6) begin  // ptr done, bit counter is for 9 bits long(0 to 8)
-            ptrdone      <= 1;
-            bitincounter <= 0;
-          end else begin
-            bitincounter <= bitincounter + 6'd1;
-          end
+          
         // read the 4 q bits
         end else if (bitincounter == 0) begin
           bitincounter <= bitincounter + 6'd1;
