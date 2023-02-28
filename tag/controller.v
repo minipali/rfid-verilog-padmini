@@ -108,6 +108,8 @@ module controller (reset, clk, rx_overflow, rx_cmd, currentrn, currenthandle,
   
 
   reg [3:0] rx_q_reg; //register to store Q value
+  reg [1:0] sel_reg;
+  reg [1:0] sel_reg_prev;
   reg readfrommsp;
   reg [15:0] storedhandle;
   reg [1:0] bitsrcselect;
@@ -191,6 +193,7 @@ module controller (reset, clk, rx_overflow, rx_cmd, currentrn, currenthandle,
       rx_en     <= 0;
       tagisopen <= 0;
       rx_q_reg  <= 0;
+      sel_reg   <= 0;
       slotcounter  <= 0;
       storedhandle <= 0;
       readfrommsp  <= 0;
@@ -211,7 +214,7 @@ module controller (reset, clk, rx_overflow, rx_cmd, currentrn, currenthandle,
         tx_en <= 1;
       end
     end else if (commstate == STATE_RX) begin  // rx mode, where we finally make sense of the data
-        if ((sel == 2'b11 && sl_flag) || (sel == 2'b10 && ~sl_flag) || (sel == 2'b00) || (sel == 2'b01)) begin
+        if ((sel_reg == 2'b11 && sl_flag) || (sel_reg == 2'b10 && ~sl_flag) || (sel_reg == 2'b00) || (sel_reg == 2'b01)) begin
             if(packet_complete) begin
               case (rx_cmd) //switch case to see which command received
                 QUERYREP: begin
@@ -240,6 +243,7 @@ module controller (reset, clk, rx_overflow, rx_cmd, currentrn, currenthandle,
                 QUERY: begin
                       tagisopen <= 0;
                       rx_q_reg  <= rx_q; //they're the same, but the reg is it's actual memory
+                      sel_reg <= sel;
                       // load slot counter
                       slotcounter <= newslotcounter; // new slot counter taken from the received data about Q, line 141. But slot is a random number anyway, just length has to be specified
                       
@@ -270,6 +274,8 @@ module controller (reset, clk, rx_overflow, rx_cmd, currentrn, currenthandle,
                 SELECT: begin
                       tagisopen <= 0;
                       rx_en <= 0;  // reset rx
+                      
+                      
                 end
                 NACK: begin
                       tagisopen <= 0;
