@@ -293,48 +293,32 @@ always @ (posedge bitinclk or posedge reset) begin
         end
       end
       SELECT: begin
-        if(bitincounter == 0) begin
+        if(!bankdone && bitincounter == 0) begin
             bitincounter <= bitincounter + 6'd1;
             sel_target[2] <= bitin;
-        end else if (bitincounter == 1) begin
+        end else if (!bankdone && bitincounter == 1) begin
             bitincounter <= bitincounter + 6'd1;
             sel_target[1] <= bitin;
-        end else if (bitincounter == 2) begin
+        end else if (!bankdone && bitincounter == 2) begin
             bitincounter <= bitincounter + 6'd1;
             sel_target[0] <= bitin;
-        end else if (bitincounter == 3) begin
+        end else if (!bankdone && bitincounter == 3) begin
             bitincounter <= bitincounter + 6'd1;
             sel_action[2] <= bitin;
-        end else if (bitincounter == 4) begin
+        end else if (!bankdone && bitincounter == 4) begin
             bitincounter <= bitincounter + 6'd1;
             sel_action[1] <= bitin;
-        end else if (bitincounter == 5) begin
-            bitincounter <= 0;
+        end else if (!bankdone && bitincounter == 5) begin
+            bitincounter <= bitincounter + 6'd1;
             sel_action[0] <= bitin;
  //read in bank for select          
-        end else if (!bankdone && (bitincounter == 0)) begin
+        end else if (!bankdone && (bitincounter == 6)) begin
             bitincounter <= bitincounter + 6'd1;
             readwritebank[1] <= bitin;
-        end else if (!bankdone && (bitincounter == 1)) begin
+        end else if (!bankdone && (bitincounter == 7)) begin
             bitincounter <= 0;
             readwritebank[0] <= bitin;
             bankdone <= 1;
-//read in pointer, bit pointer not word pointer            
-        end else if (!ebvdone && (bitincounter == 0)) begin
-              if (!bitin) begin  // last ebv byte indicator
-                ebvdone        <= 1;
-                bitincounter   <= 1;
-              end else begin
-                bitincounter <= bitincounter + 6'd1;
-              end
-        // wait out the ebv if its not done
-        end else if (!ebvdone && (bitincounter < 7)) begin
-          bitincounter <= bitincounter + 6'd1;
-        // restart to the next ebv byte
-        end else if (!ebvdone && (bitincounter >= 7)) begin
-          bitincounter <= 0;
-
-        // read in the last 7 ebv byte bits as ptr
         end else if (!ptrdone) begin
               if (bitincounter >= 7) begin  // ptr done
                 ptrdone      <= 1;
@@ -342,17 +326,17 @@ always @ (posedge bitinclk or posedge reset) begin
               end else begin
                 bitincounter <= bitincounter + 6'd1;
               end
-              readwriteptr[~bitincounter[2:0]] <= bitin;
+              sel_ptr[~bitincounter[2:0]] <= bitin;
           
-        end else if (!masklendone && (bitincounter < 8)) begin //skip over
+        end else if (!masklendone) begin //skip over
               //sel_masklen[~bitincounter[2:0]] <= bitin;
-              if(bitincounter == 7) begin 
+              if(bitincounter >= 7) begin 
                   bitincounter <= 0;
                   masklendone <= 1;
               end
               else bitincounter <= bitincounter + 6'd1;
 //now comes the mask, 16 bits assume fixed length for now              
-        end else if( masklendone && (bitincounter ==0)) begin
+        end else if(masklendone && bitincounter < 15) begin
               bitincounter <= bitincounter + 6'd1;
               mask[~bitincounter[3:0]] <= bitin;
         end else if( bitincounter == 15) begin
