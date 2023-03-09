@@ -79,7 +79,7 @@ module controller (reset, clk, rx_overflow, rx_cmd, currentrn, currenthandle,
   parameter bitsrcselect_UID = 2'd3;
   
   ///
-  parameter pll_dur = 150; 
+  parameter PLL_DUR = 150; 
    
   input reset, clk, rx_overflow, packet_complete, txsetupdone, tx_done;
   input [12:0] rx_cmd;
@@ -273,8 +273,13 @@ module controller (reset, clk, rx_overflow, rx_cmd, currentrn, currenthandle,
                 end
                 SELECT: begin
                       tagisopen <= 0;
-                      rx_en <= 0;  // reset rx
-                      
+                       
+                      if(pllwaitcount >= PLL_DUR) begin
+                         pllwaitcount <= 0;
+                         rx_en <= 0;
+                     end else begin
+                         pllwaitcount <= pllwaitcount + 10'd1;
+                     end
                       
                 end
                 NACK: begin
@@ -315,7 +320,7 @@ module controller (reset, clk, rx_overflow, rx_cmd, currentrn, currenthandle,
                      tagisopen   <= 0;
                      
                      //turn off calibration bit after 100us. Some parameter pll_dur for no of clk cycles that equate upto 100us
-                     if(pllwaitcount >= pll_dur) begin
+                     if(pllwaitcount >= PLL_DUR) begin
                          plloff <= 1;
                          pllwaitcount <= 0;
                          rx_en <= 0;
