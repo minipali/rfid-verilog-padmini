@@ -60,7 +60,7 @@ end // always
 
 reg [3:0] bitoutcounter;
 wire crcdone;
-assign crcbitout = crc[~bitoutcounter];
+assign crcbitout = crc[~bitoutcounter];//msb first
 //assign crcbitout = 0;
 assign crcdone = (bitoutcounter == 15);
 
