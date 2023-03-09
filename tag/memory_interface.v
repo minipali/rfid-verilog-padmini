@@ -53,10 +53,13 @@ module mem (
 
 reg [5:0]counter_EPC,counter_s1,counter_s2;
 reg [15:0] StoredCRC, StoredPC, Code1,tx_out; // the first three 16-bit words of EPC 
-reg curr_sl_flag,curr_inven_flag,read_state,write_state,current_cmd,RorW,adc_flag;
-reg [5:0]temp;
-reg [15:0]adc_temp_data,bit_counter,bit_shift_reg;
-reg next_word,words_done;  
+reg curr_sl_flag,curr_inven_flag,adc_flag;
+reg [2:0]current_cmd;
+reg [7:0]read_state,write_state;
+reg [5:0]temp,RorW;
+reg [15:0]adc_temp_data,bit_shift_reg;
+reg next_word,words_done;
+reg [3:0] bit_counter;  
 
 // commands 
 parameter CMD_ACK = 3'd0;
@@ -87,52 +90,63 @@ parameter STATE_SE = 8'd32;
 parameter STATE_DATAIN = 8'd64;
 parameter STATE_DATAOUT = 8'd128;
 
+
+
 always@(posedge data_clk or posedge reset)begin
     if(reset)begin
-        bit_counter = 0;
-        words_done = 0;       
+        bit_counter = 4'd0;
+        words_done = 1'd0;   
+            
     end else begin
-        if(bit_counter == 2 || (packetcomplete))begin
-            next_word = 1;
+    
+        if(bit_counter == 4'd2 || (packetcomplete))begin
+            next_word = 1'd1;
         end else begin
-            next_word = 0;
+            next_word = 1'd0;
         end
-        if(bit_counter == 0)begin
+        if(bit_counter == 4'd0)begin
             bit_shift_reg = tx_out;
         end
         tx_bit_src = bit_shift_reg[bit_counter];
         
-        if((words_done ==1) & (bit_counter == 15))begin
-            tx_data_done = 1;
-            next_word = 0;
+        if((words_done ==4'd1) & (bit_counter == 4'd15))begin
+            tx_data_done = 1'd1;
+            next_word = 1'd0;
         end
-        bit_counter = bit_counter +1;
+        bit_counter = bit_counter +4'd1;
+
     end
 end
 
 always@(posedge clk or posedge reset or posedge factory_reset)begin
+
     if(factory_reset)begin
-        counter_EPC <= 0;
-        counter_s1 <= 0;
-        counter_s2 <= 0;
-        curr_inven_flag <=1;
-        curr_sl_flag <=1;
+        counter_EPC <= 6'd0;
+        counter_s1 <= 6'd0;
+        counter_s2 <= 6'd0;
+        curr_inven_flag <=1'd1;
+        curr_sl_flag <=1'd1;
+        sl_flag <= 1'd1;  
     end else if(reset)begin
-        mem_data_out <= 0;
-        sl_flag <= 1;            //need to change
-        inven_flag <= 1;         //need to change
-        session <= 0;
-        PC_B <= 1;
-        SE <= 0;
-        WE <= 0;
-        mem_done<=0;
+        mem_data_out <= 16'd0;
+        sl_flag <= 1'd1;            //need to change
+        inven_flag <= 1'd1;         //need to change
+        session <= 2'd0;
+        PC_B <= 1'd1;
+        SE <= 1'd0;
+        WE <= 1'd0;
+        mem_done<=1'd0;
         read_state <= STATE_INITIAL;
         write_state <= STATE_INITIAL;
         RorW <= RorW_INITIAL;
+        mem_sel <= 2'd0;
+        mem_address <= 6'd0;
+        tx_data_done <= 1'b0;
     end else begin
         
-        if(counter_EPC == 3)begin
-           Code1 = EPC_data_in ;     
+        
+        if(counter_EPC == 6'd3)begin
+           Code1 = EPC_data_in ;
         end
         
         if(packetcomplete)begin
@@ -143,18 +157,17 @@ always@(posedge clk or posedge reset or posedge factory_reset)begin
                       3'b001: session = 2'b01;
                       3'b010: session = 2'b10;
                       3'b011: session = 2'b11;
-                      3'b100: sl_flag = 1'b1;
                     endcase
                 
-                    if(Code1 == mask)begin // if tag is matching
+                    if(mask == Code1)begin // if tag is matching
                         case(sel_action)
                           3'b000:if(sel_target < 3'b100)begin inven_flag = 1'b1; end else if(sel_target == 3'b100)begin sl_flag = 1'b1; end
                           3'b001:if(sel_target < 3'b100)begin inven_flag = 1'b1; end else if(sel_target == 3'b100)begin sl_flag = 1'b1; end
                           3'b011:if(sel_target < 3'b100)begin inven_flag = !curr_inven_flag; end else if(sel_target == 3'b100)begin sl_flag = !curr_sl_flag; end
                           3'b100:if(sel_target < 3'b100)begin inven_flag = 1'b0; end else if(sel_target == 3'b100)begin sl_flag = 1'b0; end
-                          3'b001:if(sel_target < 3'b100)begin inven_flag = 1'b0; end else if(sel_target == 3'b100)begin sl_flag = 1'b0; end
+                          3'b101:if(sel_target < 3'b100)begin inven_flag = 1'b0; end else if(sel_target == 3'b100)begin sl_flag = 1'b0; end
                         endcase
-                    end else begin
+                    end else begin //not matching
                         case(sel_action)
                           3'b000:if(sel_target < 3'b100)begin inven_flag = 1'b0; end else if(sel_target == 3'b100)begin sl_flag = 1'b0; end
                           3'b010:if(sel_target < 3'b100)begin inven_flag = 1'b0; end else if(sel_target == 3'b100)begin sl_flag = 1'b0; end
@@ -186,27 +199,27 @@ always@(posedge clk or posedge reset or posedge factory_reset)begin
                   read_state <= STATE_MEM_SEL;
                  end
             end else if(read_state == STATE_MEM_SEL)begin
-                  PC_B <= 0;
+                  PC_B <= 1'd0;
                   read_state <= STATE_PC_B;
             end else if(read_state == STATE_PC_B)begin
-                  mem_address <= counter_EPC-1;                //need to check
+                  mem_address <= counter_EPC-6'd1;                //need to check
                   read_state <= STATE_MEM_ADDRESS;
             end else if(read_state == STATE_MEM_ADDRESS)begin
-                  SE <= 1;
+                  SE <= 1'd1;
                   read_state <= STATE_SE;
             end else if(read_state == STATE_SE)begin
                   tx_out <= mem_read_in;
-                  counter_EPC <= counter_EPC -1;
+                  counter_EPC <= counter_EPC -6'd1;
                   read_state <= STATE_DATAIN;
             end else if(read_state == STATE_DATAIN)begin
-                if(counter_EPC!=0)begin
+                if(counter_EPC!=6'd0)begin
                  read_state <= STATE_INITIAL;
-                 words_done <= 0;   
+                 words_done <= 1'd0;   
                 end else begin
-                    words_done <= 1;
+                    words_done <= 1'd1;
                 end
-                PC_B <= 1;
-                SE <= 0;
+                PC_B <= 1'd1;
+                SE <= 1'd0;
             end
         end
         
@@ -214,7 +227,7 @@ always@(posedge clk or posedge reset or posedge factory_reset)begin
             if(packetcomplete)begin 
                 if(readwritebank == 2'b01)begin
                     RorW <= EPC_READ;
-                    temp <= readwriteptr+readwords-1;
+                    temp <= readwriteptr+readwords-8'd1;
                 end
             end
         end else if(current_cmd == CMD_SENSOR_READ)begin
@@ -240,27 +253,27 @@ always@(posedge clk or posedge reset or posedge factory_reset)begin
                   read_state <= STATE_MEM_SEL;
                  end
             end else if(read_state == STATE_MEM_SEL)begin
-                  PC_B <= 0;
+                  PC_B <= 1'd0;
                   read_state <= STATE_PC_B;
             end else if(read_state == STATE_PC_B)begin
                   mem_address <= temp;                   //need to modify, wrong code
                   read_state <= STATE_MEM_ADDRESS;
             end else if(read_state == STATE_MEM_ADDRESS)begin
-                  SE <= 1;
+                  SE <= 1'd1;
                   read_state <= STATE_SE;
             end else if(read_state == STATE_SE)begin
                   tx_out <= mem_read_in;
-                  temp <= temp -1;
+                  temp <= temp -6'd1;
                   read_state <= STATE_DATAIN;
             end else if(read_state == STATE_DATAIN)begin
-                if(temp!=readwriteptr-1)begin
+                if(temp!=readwriteptr-8'd1)begin
                  read_state <= STATE_INITIAL;
-                 words_done <= 0;
+                 words_done <= 1'd0;
                 end else begin
-                    words_done <= 1;
+                    words_done <= 1'd1;
                 end
-                PC_B <= 1;
-                SE <= 0;
+                PC_B <= 1'd1;
+                SE <= 1'd0;
             end
         end
         
@@ -271,27 +284,27 @@ always@(posedge clk or posedge reset or posedge factory_reset)begin
                   read_state <= STATE_MEM_SEL;
                  end
             end else if(read_state == STATE_MEM_SEL)begin
-                  PC_B <= 0;
+                  PC_B <= 1'd0;
                   read_state <= STATE_PC_B;
             end else if(read_state == STATE_PC_B)begin
-                  mem_address <= counter_s1-1;                   
+                  mem_address <= counter_s1-6'd1;                   
                   read_state <= STATE_MEM_ADDRESS;
             end else if(read_state == STATE_MEM_ADDRESS)begin
-                  SE <= 1;
+                  SE <= 1'd1;
                   read_state <= STATE_SE;
             end else if(read_state == STATE_SE)begin
                   tx_out <= mem_read_in;
-                  counter_s1 <= counter_s1-1;
+                  counter_s1 <= counter_s1-6'd1;
                   read_state <= STATE_DATAIN;
             end else if(read_state == STATE_DATAIN)begin
-                if(counter_s1!=0)begin
+                if(counter_s1!=6'd0)begin
                  read_state <= STATE_INITIAL;
-                 words_done <= 0;
+                 words_done <= 1'd0;
                 end else begin
-                    words_done <= 1;
+                    words_done <= 1'd1;
                 end
-                PC_B <= 1;
-                SE <= 0;
+                PC_B <= 1'd1;
+                SE <= 1'd0;
             end
         end
         
@@ -302,27 +315,27 @@ always@(posedge clk or posedge reset or posedge factory_reset)begin
                   read_state <= STATE_MEM_SEL;
                 end
             end else if(read_state == STATE_MEM_SEL)begin
-                  PC_B <= 0;
+                  PC_B <= 1'd0;
                   read_state <= STATE_PC_B;
             end else if(read_state == STATE_PC_B)begin
-                  mem_address <= counter_s2-1;                  
+                  mem_address <= counter_s2-6'd1;                  
                   read_state <= STATE_MEM_ADDRESS;
             end else if(read_state == STATE_MEM_ADDRESS)begin
-                  SE <= 1;
+                  SE <= 1'd1;
                   read_state <= STATE_SE;
             end else if(read_state == STATE_SE)begin
                   tx_out <= mem_read_in;
-                  counter_s2 <= counter_s2-1;
+                  counter_s2 <= counter_s2-6'd1;
                   read_state <= STATE_DATAIN;
             end else if(read_state == STATE_DATAIN)begin
                 if(counter_s2!=0)begin
                  read_state <= STATE_INITIAL;
-                 words_done <= 0;
+                 words_done <= 1'd0;
                 end else begin
-                    words_done <= 1;
+                    words_done <= 1'd1;
                 end
-                PC_B <= 1;
-                SE <= 0;
+                PC_B <= 1'd1;
+                SE <= 1'd0;
             end
         end
              
@@ -342,28 +355,28 @@ always@(posedge clk or posedge reset or posedge factory_reset)begin
         if(RorW == SENSOR1_WRITE)begin 
             if(write_state == STATE_INITIAL)begin
                   mem_sel <= 2'd2;
-                  read_state <= STATE_MEM_SEL;    
+                  write_state <= STATE_MEM_SEL;    
             end else if(write_state == STATE_MEM_SEL)begin
-                  PC_B <= 0;
+                  PC_B <= 1'd0;
                   write_state <= STATE_PC_B;
             end else if(write_state == STATE_PC_B)begin
                   mem_address <= counter_s1;                  
                   write_state <= STATE_MEM_ADDRESS;
             end else if(write_state == STATE_MEM_ADDRESS)begin
-                  WE <= 1;
+                  WE <= 1'd1;
                   write_state <= STATE_WE;
             end else if(write_state == STATE_WE)begin
                   mem_data_out <= adc_temp_data;
-                  counter_s1 <= counter_s1+1;
+                  counter_s1 <= counter_s1+6'd1;
                   write_state <= STATE_DATAOUT;
             end else if(write_state == STATE_DATAOUT)begin
-                  mem_done <= 1;
+                  mem_done <= 1'd1;
                   write_state <= STATE_RESET;
             end else if(write_state == STATE_RESET)begin
-                  PC_B <= 1;
-                  WE <= 0;
-                  mem_done <= 0;
-                  adc_flag <= 0;
+                  PC_B <= 1'd1;
+                  WE <= 1'd0;
+                  mem_done <= 1'd0;
+                  adc_flag <= 1'd0;
                   write_state <= STATE_INITIAL;
                   RorW <= RorW_INITIAL;
                   end
@@ -372,28 +385,28 @@ always@(posedge clk or posedge reset or posedge factory_reset)begin
         if(RorW == SENSOR2_WRITE)begin
             if(write_state == STATE_INITIAL)begin
                       mem_sel <= 2'd2;
-                      read_state <= STATE_MEM_SEL;          
+                      write_state <= STATE_MEM_SEL;          
             end else if(write_state == STATE_MEM_SEL)begin
-                  PC_B <= 0;
+                  PC_B <= 1'd0;
                   write_state <= STATE_PC_B;
             end else if(write_state == STATE_PC_B)begin
                   mem_address <= counter_s2;                  
                   write_state <= STATE_MEM_ADDRESS;
             end else if(write_state == STATE_MEM_ADDRESS)begin
-                  WE <= 1;
+                  WE <= 1'd1;
                   write_state <= STATE_WE;
             end else if(write_state == STATE_WE)begin
                   mem_data_out <= adc_temp_data;
-                  counter_s2 <= counter_s2+1;
+                  counter_s2 <= counter_s2+6'd1;
                   write_state <= STATE_DATAOUT;
             end else if(write_state == STATE_DATAOUT)begin
-                  mem_done <= 1;
+                  mem_done <= 1'd1;
                   write_state <= STATE_RESET;
             end else if(write_state == STATE_RESET)begin
-                  PC_B <= 1;
-                  WE <= 0;
-                  mem_done <= 0;
-                  adc_flag <= 0;
+                  PC_B <= 1'd1;
+                  WE <= 1'd0;
+                  mem_done <= 1'd0;
+                  adc_flag <= 1'd0;
                   write_state <= STATE_INITIAL;
                   RorW <= RorW_INITIAL;
                   end
@@ -403,23 +416,23 @@ always@(posedge clk or posedge reset or posedge factory_reset)begin
        if(RorW == EPC_WRITE)begin
             if(write_state == STATE_INITIAL)begin
                   mem_sel <= 2'd1;
-                  read_state <= STATE_MEM_SEL;    
+                  write_state <= STATE_MEM_SEL;    
             end else if(write_state == STATE_MEM_SEL)begin
-                  PC_B <= 0;
+                  PC_B <= 1'd0;
                   write_state <= STATE_PC_B;
             end else if(write_state == STATE_PC_B)begin
                   mem_address <= readwriteptr;                  
                   write_state <= STATE_MEM_ADDRESS;
             end else if(write_state == STATE_MEM_ADDRESS)begin
-                  WE <= 1;
+                  WE <= 1'd1;
                   write_state <= STATE_WE;
             end else if(write_state == STATE_WE)begin
                   mem_data_out <= EPC_data_in;
-                  counter_EPC <= counter_EPC+1;
+                  counter_EPC <= counter_EPC+6'd1;
                   write_state <= STATE_DATAOUT;
             end else if(write_state == STATE_DATAOUT)begin
-                  PC_B <= 1;
-                  WE <= 0;
+                  PC_B <= 1'd1;
+                  WE <= 1'd0;
                   write_state <= STATE_INITIAL;
                   RorW <= RorW_INITIAL;
             end
