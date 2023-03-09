@@ -31,6 +31,18 @@ always @ (posedge crcinclk or posedge reset) begin
   end // ~reset
 end // always
 
+always @ (negedge reset) begin
+    if(reset) begin
+        crc     <= 5'b01001;
+    end else begin
+       crc[0]  <= (crcbitin ^ crc[4]);
+       crc[1]  <= crc[0];
+       crc[2]  <= crc[1];
+       crc[3]  <= crc[2] ^ crcbitin ^ crc[4];
+       crc[4]  <= crc[3]; 
+    end
+end
+
 endmodule
 
 
