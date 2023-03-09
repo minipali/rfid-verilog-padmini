@@ -1,4 +1,5 @@
 ///modified code
+//check this change
 
 // Top level which connects all the top-level functional blocks.
 // Copyright 2010 University of Washington
@@ -130,6 +131,7 @@
   output wire [12:0] rx_cmd;
       //crc5, crc16 checks
   wire crc5invalid, crc16invalid;
+  
 
   // TX module connections
   wire tx_reset, txsetupdone, tx_done;
@@ -244,7 +246,7 @@
       //debug_address <= debug_address + 4'd1;
       
 /*********CHANGE DEBUG ADDRESS HERE TO VIEW *********/
-      debug_address <= 4'd7; 
+      debug_address <= 4'd6; 
     end
   end
   always @ (debug_clk) begin // always @ (debug_address) begin // --> there initially
