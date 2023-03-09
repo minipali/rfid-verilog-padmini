@@ -28,7 +28,7 @@ module cmdparser (reset, clk, bitin, bitclk, cmd_out, packet_complete_out, cmd_c
   wire       packet_complete, cmd_complete;
   reg  [7:0] cmd;
   wire [7:0] new_cmd;
-  reg  [5:0] count;
+  reg  [6:0] count;
   reg  [1:0] m;
   reg        trext, dr; // modulation settings from query
   
@@ -42,7 +42,7 @@ module cmdparser (reset, clk, bitin, bitclk, cmd_out, packet_complete_out, cmd_c
   
   //crc16 checking
   reg crc16reset;
-  wire [16:0] crc16out;
+  wire [15:0] crc16out;
   output reg crc16invalid;
   //module crc16check(reset, crcinclk, crcbitin, crc);
   crc16check  crc16c(crc16reset, bitclk, bitin, crc16out);
@@ -70,7 +70,7 @@ module cmdparser (reset, clk, bitin, bitclk, cmd_out, packet_complete_out, cmd_c
     end else begin
     
       cmd   <= new_cmd;
-      count <= count + 6'd1;
+      count <= count + 7'd1;
       packet_complete_out <= packet_complete;  // clear up glitching?
 
       if(cmd_out[2] && count == 4) dr    <= bitin;
@@ -112,11 +112,11 @@ module cmdparser (reset, clk, bitin, bitclk, cmd_out, packet_complete_out, cmd_c
                             (cmd_out[1] && count >= 17) ||  // Ack
                             (cmd_out[2] && count >= 21) ||  // Query
                             (cmd_out[3] && count >= 8 ) ||  // QueryAdj
-                            (cmd_out[4] && count >= 44) ||  // Select
+                            (cmd_out[4] && count >= 60) ||  // Select
                             (cmd_out[5] && count >= 7 ) ||  // Nack
                             (cmd_out[6] && count >= 39) ||  // ReqRN
                             (cmd_out[7] && count >= 57) ||  // Read, 58 bits assuming 8 bit pointer
-                            (cmd_out[8] && count >= 58))||   // Write
+                            (cmd_out[8] && count >= 65))||   // Write
                             ///
                             (cmd_out[9] && count >= 13) ||   //trans added command 11011010 plus 6 bits
                             ////
