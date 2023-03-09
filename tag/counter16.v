@@ -16,7 +16,7 @@ wire [15:0] next_count;
 assign next_count = count + 16'd1;
 
 wire overflow;
-assign overflow = (count > 2500);
+assign overflow = (count > 5000);
 
 always @ (posedge clk or posedge reset) begin
 
