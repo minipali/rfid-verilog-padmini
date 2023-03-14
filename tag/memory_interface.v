@@ -1,24 +1,7 @@
-`timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
-// 
-// Create Date: 02/05/2023 03:42:34 PM
-// Design Name: 
-// Module Name: mem
-// Project Name: 
-// Target Devices: 
-// Tool Versions: 
-// Description: 
-// 
-// Dependencies: 
-// 
-// Revision:
-// Revision 0.01 - File Created
-// Additional Comments:
-// 
-//////////////////////////////////////////////////////////////////////////////////
+//final as of 14-03-2023
 
+
+`timescale 1ns / 1ps
 
 module mem (
     input wire clk,factory_reset,reset,packetcomplete,
