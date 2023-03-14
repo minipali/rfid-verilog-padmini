@@ -3,7 +3,7 @@
 
 `timescale 1ns / 1ps
 
-module mem (
+module mem_interface (
     input wire clk,factory_reset,reset,packetcomplete,
     input wire [12:0] rx_cmd,
     input wire [2:0] sel_target,
