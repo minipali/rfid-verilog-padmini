@@ -1,6 +1,6 @@
-//modified, iter1
+//final as of 14-03-2023
 
-///for read sensor data, procedure same as read?
+
 
 `timescale 1ns/1ns
 
