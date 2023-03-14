@@ -1,6 +1,4 @@
-//modifications, iteration 1
-
-
+//Final as of 14-03-2023
 
 
 // Command Parser: Parses reader command and signals packet completion.
