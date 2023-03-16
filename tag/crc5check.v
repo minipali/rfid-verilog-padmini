@@ -9,7 +9,7 @@
 // inclk, inbit generate crc
 
 
-module crc5(reset, crcinclk, crcbitin, crc);
+module crc5check(reset, crcinclk, crcbitin, crc);
 input reset, crcinclk, crcbitin;
 output reg [4:0] crc;
 
