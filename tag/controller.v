@@ -1,4 +1,4 @@
-//final as of 14-03-2023
+//final as of 20-03-2023
 
 
 // Controller module
@@ -53,7 +53,6 @@ module controller (reset, clk, rx_overflow, rx_cmd, currentrn, currenthandle,
                    ///
                    plloff,
                    ////
-                   adc_sample, 
                    crc5invalid, crc16invalid, sel, sl_flag);
   
   parameter QUERYREP   = 13'b0000000000001;
@@ -94,7 +93,7 @@ module controller (reset, clk, rx_overflow, rx_cmd, currentrn, currenthandle,
   ///
   output reg plloff;
   ///
-  output reg adc_sample;
+  
   input crc5invalid, crc16invalid;
   
   //select functionality
@@ -328,8 +327,7 @@ module controller (reset, clk, rx_overflow, rx_cmd, currentrn, currenthandle,
                 end
                 SAMPSENS: begin
                      tagisopen   <= 0;
-                     //want to send a bit high to the adc to sample data, adc_sample
-                     adc_sample  <= 1;
+                     
                      rx_en <= 0;
                 end
                 SENSDATA: begin
