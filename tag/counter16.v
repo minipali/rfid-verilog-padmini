@@ -1,5 +1,5 @@
 //final as of 14-03-2023
-
+`timescale 1ns/1ns
 
 
 // Copyright 2010 University of Washington
