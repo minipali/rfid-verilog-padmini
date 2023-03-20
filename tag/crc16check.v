@@ -1,8 +1,8 @@
-//final as of 14-03-2023
+//final as of 20-03-2023
 
 
 
-`timescale 1ns/1ps
+`timescale 1ns/1ns
 
 // CRC16 check: only diff with crc16 is that this has parallel output
 
