@@ -1,4 +1,5 @@
 //Final as of 20-03-2023
+`timescale 1ns/1ns
 
 
 // Command Parser: Parses reader command and signals packet completion.
