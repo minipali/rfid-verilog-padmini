@@ -1,4 +1,4 @@
-//final as of 14-03-2023
+//final as of 20-03-2023
 
 
 
@@ -33,10 +33,10 @@
            ///transmit clock
            pll_enable, freq_channel, rforbase,
            ////from sample data
-           adc_sample, senscode,
+           senscode,
            /////
            morb_trans, sensor_time_stamp, bf_dur,      
-           crc5invalid, crc16invalid, bitout,
+           bitout,
            calibration_control,
            //select
            sel_target, sel_action, sel_ptr, mask,
@@ -54,9 +54,6 @@
 
   // EPC ID source, uid removed
 
-  // ADC connections
-  wire  adc_sample_datain;
-  wire adc_sample_clk, adc_sample_ctl;
 
   
   output [15:0] writedataout; 
@@ -74,7 +71,7 @@
   output wire rforbase;
   //// sampsens: wilo router asks tag to sample data
   output wire [2:0] senscode;
-  output wire adc_sample;
+  
   ///// sensdata: wilo router asks for sensor data
   output wire morb_trans; //main or backscatter transmitter
   output wire [7:0] sensor_time_stamp;
@@ -90,7 +87,7 @@
   input sl_flag;
   
   //crc5 and crc16 checks
-  output crc5invalid, crc16invalid;
+  //output crc5invalid, crc16invalid;
   
   //clock recovery circuit signals
   output wire calibration_control;
@@ -247,7 +244,7 @@
       //debug_address <= debug_address + 4'd1;
       
 /*********CHANGE DEBUG ADDRESS HERE TO VIEW *********/
-      debug_address <= 4'd6; 
+      debug_address <= 4'd0; 
     end
   end
   always @ (debug_clk) begin // always @ (debug_address) begin // --> there initially
@@ -289,7 +286,7 @@
                     ///
                     plloff,
                     ////
-                    adc_sample, 
+                     
                     crc5invalid, crc16invalid, sel, sl_flag);
 
   txsettings U_SET (reset, trcal_in,  m_in,  dr_in,  trext_in, query_complete,
