@@ -1,5 +1,5 @@
 //final as of 20-03-2023
-
+`timescale 1ns/1ns
 
 // Controller module
 // Copyright 2010 University of Washington
@@ -359,4 +359,3 @@ module controller (reset, clk, rx_overflow, rx_cmd, currentrn, currenthandle,
     end //reset
   end//always
 endmodule
-
