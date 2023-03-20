@@ -1,5 +1,5 @@
 //final as of 20-03-2023
-
+`timescale 1ns/1ns
 
 
 // Top level which connects all the top-level functional blocks.
