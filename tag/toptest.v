@@ -1,12 +1,6 @@
-//20-03-2023
+//final as of 26-03-2023
 
 `timescale 1ns / 1ns
-//////////////////////////////////////////////////////////////////////////////////
-
-// Module Name: toptest
-// Aditional comments:
-// Simulates query command. 
-//next to be simulated- ack
 //////////////////////////////////////////////////////////////////////////////////
 module toptest();
 
@@ -225,7 +219,23 @@ module toptest();
            sel_target, sel_action, sel_ptr, mask,
            sl_flag, packet_complete);
            
-
+//module top(reset, clk, demodin, modout, // regular IO
+//           writedataout, epc_data_ready,
+//           readwritebank, readwriteptr, readwords, membitclk, membitsrc, memdatadone, 
+//           use_q, comm_enable, tx_enable,
+//           debug_clk, debug_out,
+//           rx_cmd,
+//           ///transmit clock
+//           pll_enable, freq_channel, rforbase,
+//           ////from sample data
+//           adc_sample, senscode,
+//           /////
+//           morb_trans, sensor_time_stamp, bf_dur,      
+//           crc5invalid, crc16invalid, bitout,
+//           calibration_control,
+//           //select
+//           sel_target, sel_action, sel_ptr, mask,
+//           sl_flag, packet_complete);
 
 
 endmodule
