@@ -1,15 +1,51 @@
-//final as of 20-03-2023
+//final as of 26-03-2023
 
 
 
-`timescale 1ns/1ns
+`timescale 1ns/1ps
 
-// crc5check
+// CRC5
 
 // inclk, inbit generate crc
 
 
-module crc5check(reset, crcinclk, crcbitin, crc);
+module crc5check(masterreset, reset, crcinclk, crcbitin, crc);
+input masterreset, reset, crcinclk, crcbitin;
+output reg [4:0] crc;
+
+
+//reg [2:0] bitoutcounter; //8 bit counter
+//wire crcdone;
+//assign crcout = crc;
+//assign crcbitout = 0;
+
+//initial crc     <= 5'b01001;
+
+always @ (masterreset or reset or crcinclk) begin
+  if(masterreset || reset) begin
+    crc     <= 5'b01001;
+//~reset below because want it triggered at negedge of crc5reset, and crcinclk because only want posedge crcclk 
+  end else if(crcinclk & ~reset) begin 
+    crc[0]  <= (crcbitin ^ crc[4]);
+    crc[1]  <= crc[0];
+    crc[2]  <= crc[1];
+    crc[3]  <= crc[2] ^ crcbitin ^ crc[4];
+    crc[4]  <= crc[3];
+    
+  end // ~reset
+end // always
+
+endmodule
+
+/*
+`timescale 1ns/1ps
+
+// CRC5
+
+// inclk, inbit generate crc
+
+
+module crc5check (reset, crcinclk, crcbitin, crc);
 input reset, crcinclk, crcbitin;
 output reg [4:0] crc;
 
@@ -21,7 +57,7 @@ output reg [4:0] crc;
 
 //initial crc     <= 5'b01001;
 
-always @ (posedge crcinclk or posedge reset) begin
+always @ ( posedge crcinclk or posedge reset) begin
   if (reset) begin
     crc     <= 5'b01001;
   end else begin
@@ -47,5 +83,7 @@ always @ (negedge reset) begin
 end
 
 endmodule
+*/
+
 
 
