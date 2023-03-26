@@ -1,4 +1,4 @@
-//final as of 20-03-2023
+//final as of 26-03-2023
 `timescale 1ns/1ns
 
 
@@ -247,7 +247,7 @@
       debug_address <= 4'd0; 
     end
   end
-  always @ (debug_clk) begin // always @ (debug_address) begin // --> there initially
+  always @ (*) begin // always @ (debug_address) begin // --> there initially
   case(debug_address)
     0:  debug_out = packet_complete;
     1:  debug_out = cmd_complete;
