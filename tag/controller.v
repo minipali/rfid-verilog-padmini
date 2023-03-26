@@ -1,4 +1,4 @@
-//final as of 20-03-2023
+//final as of 26-03-2023
 `timescale 1ns/1ns
 
 // Controller module
@@ -107,7 +107,6 @@ module controller (reset, clk, rx_overflow, rx_cmd, currentrn, currenthandle,
   reg [3:0] rx_q_reg; //register to store Q value
   reg [1:0] sel_reg;
   reg [1:0] sel_reg_prev;
-  reg readfrommsp;
   reg [15:0] storedhandle;
   reg [1:0] bitsrcselect;
   reg docrc; //flag to do crc or not
@@ -193,7 +192,7 @@ module controller (reset, clk, rx_overflow, rx_cmd, currentrn, currenthandle,
       sel_reg   <= 0;
       slotcounter  <= 0;
       storedhandle <= 0;
-      readfrommsp  <= 0;
+      
       
       ///
       pllwaitcount <= 10'd0;
@@ -300,8 +299,7 @@ module controller (reset, clk, rx_overflow, rx_cmd, currentrn, currenthandle,
                 end
                 READ: begin
                       if (comm_enable && handlematch && ~crc16invalid) begin
-                        if (readwriteptr == 0) readfrommsp <= 0;
-                        else                   readfrommsp <= 1;
+                        
                         commstate  <= STATE_TX;
                         bitsrcselect     <= bitsrcselect_ADC;
                         docrc      <= 1;
@@ -359,3 +357,4 @@ module controller (reset, clk, rx_overflow, rx_cmd, currentrn, currenthandle,
     end //reset
   end//always
 endmodule
+
