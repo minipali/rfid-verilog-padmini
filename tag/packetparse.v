@@ -1,4 +1,4 @@
-//final as of 20-03-2023
+//final as of 26-03-2023
 
 
 
@@ -40,7 +40,7 @@ module packetparse(reset, bitin, bitinclk, packettype, //inputs
                    //bfcnst commands, along with freq channel - using freq_chnanel from trns command
                    bf_dur,
                    //select
-                   sel_target, sel_action, sel_ptr, mask, truncate);
+                   sel_target, sel_action, sel_ptr, mask);
 
                    
 //7 inputs
@@ -75,7 +75,7 @@ output reg [2:0] sel_action;
 output reg [7:0] sel_ptr;
 //output reg [7:0] sel_masklen;
 output reg [15: 0] mask;
-output reg     truncate; 
+
 reg masklendone;
 
 
@@ -217,7 +217,7 @@ always @ (posedge bitinclk or posedge reset) begin
     sel_ptr          <= 8'd0;
     //sel_masklen      <= 8'd0;
     mask             <= 16'd0;
-    truncate         <= 1'd0;
+    
 // check for read, write, req_rn, ack
   end else begin
     case(packettype)
@@ -339,9 +339,7 @@ always @ (posedge bitinclk or posedge reset) begin
         end else if(masklendone && bitincounter < 15) begin
               bitincounter <= bitincounter + 6'd1;
               mask[~bitincounter[3:0]] <= bitin;
-        end else if( bitincounter == 15) begin
-              bitincounter <= bitincounter + 6'd1;
-              truncate <= bitin;              
+                
 //handlematch              
         end else if (!matchfailed && !lastbit && thisbitmatches) begin
           handlebitcounter <= handlebitcounter + 4'd1;
