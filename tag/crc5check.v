@@ -30,9 +30,11 @@ always @ (masterreset or reset or crcinclk) begin
     crc[1]  <= crc[0];
     crc[2]  <= crc[1];
     crc[3]  <= crc[2] ^ crcbitin ^ crc[4];
-    crc[4]  <= crc[3];
-    
-  end // ~reset
+    crc[4]  <= crc[3];    
+  end else begin
+    //do nothing
+    //crc <= crc;
+  end// ~reset
 end // always
 
 endmodule
@@ -84,6 +86,5 @@ end
 
 endmodule
 */
-
 
 
