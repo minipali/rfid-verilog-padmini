@@ -26,7 +26,7 @@ module mem_interface (
     output reg [15:0] mem_data_out, //data is given to the memory
     output reg PC_B,WE,SE,
     output reg [5:0]mem_address,   //this will enable WL
-    output reg [1:0]mem_sel,
+    output reg [2:0]mem_sel,
     output reg tx_bit_src,
     output reg mem_done,
     output reg sl_flag,inven_flag,
@@ -79,7 +79,20 @@ always@(posedge data_clk or posedge reset)begin
     if(reset)begin
         bit_counter = 4'd0;
         words_done = 1'd0;   
-            
+        mem_data_out <= 16'd0;
+        sl_flag <= 1'd1;            
+        inven_flag <= 1'd1;         
+        session <= 2'd0;
+        PC_B <= 1'd1;
+        SE <= 1'd0;
+        WE <= 1'd0;
+        mem_done<=1'd0;
+        read_state <= STATE_INITIAL;
+        write_state <= STATE_INITIAL;
+        RorW <= RorW_INITIAL;
+        mem_sel <= 3'd0;
+        mem_address <= 6'd0;
+        tx_data_done <= 1'b0;    
     end else begin
     
         if(bit_counter == 4'd2 || (packetcomplete))begin
@@ -101,7 +114,7 @@ always@(posedge data_clk or posedge reset)begin
     end
 end
 
-always@(posedge clk or posedge reset or posedge factory_reset)begin
+always@(posedge clk or posedge factory_reset)begin
 
     if(factory_reset)begin
         counter_EPC <= 6'd0;
@@ -110,24 +123,7 @@ always@(posedge clk or posedge reset or posedge factory_reset)begin
         curr_inven_flag <=1'd1;
         curr_sl_flag <=1'd1;
         sl_flag <= 1'd1;  
-    end else if(reset)begin
-        mem_data_out <= 16'd0;
-        sl_flag <= 1'd1;            //need to change
-        inven_flag <= 1'd1;         //need to change
-        session <= 2'd0;
-        PC_B <= 1'd1;
-        SE <= 1'd0;
-        WE <= 1'd0;
-        mem_done<=1'd0;
-        read_state <= STATE_INITIAL;
-        write_state <= STATE_INITIAL;
-        RorW <= RorW_INITIAL;
-        mem_sel <= 2'd0;
-        mem_address <= 6'd0;
-        tx_data_done <= 1'b0;
     end else begin
-        
-        
         if(counter_EPC == 6'd3)begin
            Code1 = EPC_data_in ;
         end
@@ -178,7 +174,7 @@ always@(posedge clk or posedge reset or posedge factory_reset)begin
         if(current_cmd == CMD_ACK)begin     
             if(read_state == STATE_INITIAL)begin
                 if(next_word)begin
-                  mem_sel <= 2'd1;
+                  mem_sel <= 3'd1;
                   read_state <= STATE_MEM_SEL;
                  end
             end else if(read_state == STATE_MEM_SEL)begin
@@ -232,7 +228,7 @@ always@(posedge clk or posedge reset or posedge factory_reset)begin
         if(RorW == EPC_READ)begin     
             if(read_state == STATE_INITIAL)begin
                 if(next_word)begin
-                  mem_sel <= 2'd1;
+                  mem_sel <= 3'd1;
                   read_state <= STATE_MEM_SEL;
                  end
             end else if(read_state == STATE_MEM_SEL)begin
@@ -263,7 +259,7 @@ always@(posedge clk or posedge reset or posedge factory_reset)begin
         if(RorW == SENSOR1_READ)begin     
             if(read_state == STATE_INITIAL)begin
                 if(next_word)begin
-                  mem_sel <= 2'd2;
+                  mem_sel <= 3'd2;
                   read_state <= STATE_MEM_SEL;
                  end
             end else if(read_state == STATE_MEM_SEL)begin
@@ -294,7 +290,7 @@ always@(posedge clk or posedge reset or posedge factory_reset)begin
         if(RorW == SENSOR2_READ)begin     
             if(read_state == STATE_INITIAL)begin
                 if(next_word)begin
-                  mem_sel <= 2'd3;
+                  mem_sel <= 3'd4;
                   read_state <= STATE_MEM_SEL;
                 end
             end else if(read_state == STATE_MEM_SEL)begin
@@ -337,7 +333,7 @@ always@(posedge clk or posedge reset or posedge factory_reset)begin
         
         if(RorW == SENSOR1_WRITE)begin 
             if(write_state == STATE_INITIAL)begin
-                  mem_sel <= 2'd2;
+                  mem_sel <= 3'd2;
                   write_state <= STATE_MEM_SEL;    
             end else if(write_state == STATE_MEM_SEL)begin
                   PC_B <= 1'd0;
@@ -367,7 +363,7 @@ always@(posedge clk or posedge reset or posedge factory_reset)begin
         
         if(RorW == SENSOR2_WRITE)begin
             if(write_state == STATE_INITIAL)begin
-                      mem_sel <= 2'd2;
+                      mem_sel <= 3'd4;
                       write_state <= STATE_MEM_SEL;          
             end else if(write_state == STATE_MEM_SEL)begin
                   PC_B <= 1'd0;
@@ -398,7 +394,7 @@ always@(posedge clk or posedge reset or posedge factory_reset)begin
         
        if(RorW == EPC_WRITE)begin
             if(write_state == STATE_INITIAL)begin
-                  mem_sel <= 2'd1;
+                  mem_sel <= 3'd1;
                   write_state <= STATE_MEM_SEL;    
             end else if(write_state == STATE_MEM_SEL)begin
                   PC_B <= 1'd0;
