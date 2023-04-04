@@ -125,7 +125,7 @@ always@(posedge clk)begin
         if(counter_EPC == 6'd3)begin
            Code1 = EPC_data_in ;
         end else begin
-           Code1 = 16'd0; 
+           Code1 = Code1; 
         end
         
         if(packetcomplete)begin
