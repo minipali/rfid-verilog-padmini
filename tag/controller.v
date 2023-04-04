@@ -1,4 +1,4 @@
-//final as of 26-03-2023
+//final as of 04-04-2023
 `timescale 1ns/1ns
 
 // Controller module
@@ -77,6 +77,7 @@ module controller (reset, clk, rx_overflow, rx_cmd, currentrn, currenthandle,
   
   ///
   parameter PLL_DUR = 150; 
+  parameter SAMPSENS_WAIT_DUR = 1000;
    
   input reset, clk, rx_overflow, packet_complete, txsetupdone, tx_done;
   input [12:0] rx_cmd;
@@ -326,10 +327,16 @@ module controller (reset, clk, rx_overflow, rx_cmd, currentrn, currenthandle,
                 SAMPSENS: begin
                      tagisopen   <= 0;
                      
-                     rx_en <= 0;
+                     if(pllwaitcount >= SAMPSENS_WAIT_DUR) begin
+                         
+                         pllwaitcount <= 0;
+                         rx_en <= 0;
+                     end else begin
+                         pllwaitcount <= pllwaitcount + 10'd1;
+                     end
                 end
                 SENSDATA: begin
-                     if (comm_enable && handlematch) begin
+                     if (comm_enable && handlematch && ~crc16invalid) begin
                         commstate  <= STATE_TX;
                         bitsrcselect     <= bitsrcselect_ADC;
                         docrc      <= 1;
@@ -357,4 +364,3 @@ module controller (reset, clk, rx_overflow, rx_cmd, currentrn, currenthandle,
     end //reset
   end//always
 endmodule
-
