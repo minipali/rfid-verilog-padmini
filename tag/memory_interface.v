@@ -216,7 +216,7 @@ always@(posedge clk)begin
           end
           adc_temp_data = {sensor_time_stamp,ADC_data};
        end else begin
-           Read_or_Write = RorW_INITIAL;
+           adc_temp_data = 16'd0;
        end
         
        if(current_cmd == CMD_ACK)begin     
