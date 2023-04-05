@@ -9,7 +9,6 @@ module mem(
     input wire [2:0] sel_target,
     input wire [2:0] sel_action,
     input wire [7:0] sel_ptr,
-    input wire [7:0] sel_masklen,
     input wire [15:0] mask,  
     input wire [1:0] readwritebank,
     input wire [7:0] readwriteptr, 
@@ -31,7 +30,7 @@ module mem(
     output reg mem_done,
     output reg sl_flag,inven_flag,
     output reg [1:0]session,RorW,
-    output reg tx_data_done
+    output reg tx_data_done,
 );
 
 reg [5:0]counter_EPC,counter_s1,counter_s2;
@@ -87,7 +86,7 @@ always@(posedge data_clk or posedge reset)begin
         mem_sel = 3'd0;
         mem_address = 6'd0;
         tx_data_done = 1'b0;
-        RorW = 2'd0;    
+        RorW = 2'd0;   
     end else begin
     
         if(bit_counter == 4'd2 || (packetcomplete))begin
@@ -107,7 +106,6 @@ always@(posedge data_clk or posedge reset)begin
             next_word = 1'd0;
         end else begin
             tx_data_done = 1'd0;
-            next_word = 1'd1;
         end
         bit_counter = bit_counter +4'd1;     
       end
@@ -122,12 +120,13 @@ always@(posedge clk)begin
         curr_sl_flag =1'd1;
         sl_flag = 1'd1;  
     end else begin
-        if(counter_EPC == 6'd3)begin
+        if(counter_EPC == sel_ptr)begin
            Code1 = EPC_data_in ;
         end else begin
            Code1 = Code1; 
         end
         
+      
         if(packetcomplete)begin
             if(rx_cmd[4])begin//if command is select
                 if(readwritebank == 2'b01)begin // if membank is 01
@@ -203,12 +202,12 @@ always@(posedge clk)begin
         if(ADC_data_ready)begin //have to wait for one clock cycle
             adc_flag = ADC_DATA_READY_FLAG;
         end else begin
-            adc_flag = 1'd0;
+            adc_flag = adc_flag;
         end
        
        if(adc_flag == ADC_DATA_READY_FLAG)begin 
           if(sensor_code == 3'b001)begin  //sensor 1
-            Read_or_Write = SENSOR1_WRITE;
+              Read_or_Write = SENSOR1_WRITE;
           end else if(sensor_code == 3'b010)begin  //sensor 2
               Read_or_Write = SENSOR2_WRITE;
           end else begin
@@ -247,28 +246,28 @@ always@(posedge clk)begin
                 RorW = 2'd0;
            end
         end else if(Read_or_Write == SENSOR1_WRITE)begin 
-            if(write_state == STATE_INITIAL)begin
-                  mem_sel = 3'd2;
-                  RorW = 2'b10;
-                  PC_B = 1'd0;
-                  mem_address = counter_s1;
-                  write_state = STATE_1;    
-            end else if(write_state == STATE_1)begin
-                  PC_B = 1'd1;
-                  mem_data_out = adc_temp_data;
-                  WE = 1'd1;
-                  write_state = STATE_2;
-            end else if(write_state == STATE_2)begin
-                  counter_s1 = counter_s1+6'd1;
-                  mem_done = 1'd1;
-                  write_state = STATE_RESET;
-            end else begin
-                  RorW = 2'd0;
-                  WE = 1'd0;
-                  adc_flag = 1'd0;
-                  write_state = STATE_INITIAL;
-                  Read_or_Write = RorW_INITIAL;
-                  end
+               if(write_state == STATE_INITIAL)begin
+                      mem_sel = 3'd2;
+                      RorW = 2'b10;
+                      PC_B = 1'b0;
+                      mem_address = counter_s1;
+                      write_state = STATE_1;    
+                end else if(write_state == STATE_1)begin
+                      PC_B = 1'd1;
+                      mem_data_out = adc_temp_data;
+                      WE = 1'd1;
+                      write_state = STATE_2;
+                end else if(write_state == STATE_2)begin
+                      counter_s1 = counter_s1+6'd1;
+                      mem_done = 1'd1;
+                      write_state = STATE_RESET;
+                end else begin
+                      RorW = 2'd0;
+                      WE = 1'd0;
+                      adc_flag = 1'd0;
+                      write_state = STATE_INITIAL;
+                      Read_or_Write = RorW_INITIAL;
+                      end
         end else if(Read_or_Write == SENSOR2_WRITE)begin
             if(write_state == STATE_INITIAL)begin
                   mem_sel = 3'd4;
