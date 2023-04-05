@@ -32,7 +32,7 @@ module mem(
     output reg [1:0]session,RorW,
     output reg tx_data_done
     
-    //output reg [5:0] counter_EPC //for debugging
+    //,output reg [5:0] counter_EPC //for debugging
 );
 
 reg [5:0]counter_s1,counter_s2;
@@ -253,7 +253,7 @@ always@(posedge clk)begin
                 SE = 1'd0;
                 RorW = 2'd0;
            end
-        end else if(Read_or_Write == SENSOR1_WRITE)begin 
+        end else if(Read_or_Write == SENSOR1_WRITE  && myflag == 1'b0)begin 
                if(write_state == STATE_INITIAL)begin
                       mem_sel = 3'd2;
                       RorW = 2'b10;
@@ -265,7 +265,7 @@ always@(posedge clk)begin
                       mem_data_out = adc_temp_data;
                       WE = 1'd1;
                       write_state = STATE_2;
-                end else if(write_state == STATE_2 && myflag == 1'b0)begin
+                end else if(write_state == STATE_2)begin
                       counter_s1 = counter_s1+6'd1;
                       mem_done = 1'd1;
                       write_state = STATE_RESET;
@@ -277,7 +277,7 @@ always@(posedge clk)begin
                       write_state = STATE_INITIAL;
                       Read_or_Write = RorW_INITIAL;
                       end
-        end else if(Read_or_Write == SENSOR2_WRITE)begin
+        end else if(Read_or_Write == SENSOR2_WRITE  && myflag == 1'b0)begin
             if(write_state == STATE_INITIAL)begin
                   mem_sel = 3'd4;
                   RorW = 2'b10;
@@ -289,7 +289,7 @@ always@(posedge clk)begin
                   mem_data_out = adc_temp_data;
                   WE = 1'd1;
                   write_state = STATE_2;
-            end else if(write_state == STATE_2 && myflag == 1'b0)begin    
+            end else if(write_state == STATE_2)begin    
                   counter_s2 = counter_s2+6'd1;
                   mem_done = 1;
                   write_state = STATE_RESET;
@@ -301,7 +301,7 @@ always@(posedge clk)begin
                   write_state = STATE_INITIAL;
                   Read_or_Write = RorW_INITIAL;
                   end
-         end else if(Read_or_Write == EPC_WRITE)begin
+         end else if(Read_or_Write == EPC_WRITE  && myflag == 1'b0)begin
             if(write_state == STATE_INITIAL)begin
                   mem_sel = 3'd1;
                   RorW = 2'b10;
@@ -313,7 +313,7 @@ always@(posedge clk)begin
                   mem_data_out = EPC_data_in;
                   WE = 1'd1;
                   write_state = STATE_2;
-            end else if(write_state == STATE_2 && myflag == 1'b0)begin
+            end else if(write_state == STATE_2)begin
                   counter_EPC = counter_EPC+6'd1;
                   myflag = 1'b1;
                   write_state = STATE_RESET;
