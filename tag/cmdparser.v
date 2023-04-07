@@ -1,4 +1,4 @@
-//Final as of 04-04-2023
+//Final as of 07-04-2023
 `timescale 1ns/1ns
 
 
@@ -119,9 +119,9 @@ module cmdparser (reset, clk, bitin, bitclk, cmd_out, packet_complete_out, cmd_c
                             ///
                             (cmd_out[9] && count >= 13) ||   //trans added command 11011010 plus 6 bits
                             ////
-                            (cmd_out[10] && count >= 10)||   //11011111, sample sensor data plus 3 bits 
+                            (cmd_out[10] && count >= 18)||   //11011111, sample sensor data plus 3 bits 
                             /////
-                            (cmd_out[11] && count >= 51)||  //read sensor data - 8+1+3+8+32 = 52
+                            (cmd_out[11] && count >= 43)||  //read sensor data - 8+1+3+8+32 = 52
                             (cmd_out[12] && count >= 51); // bfconst
                             
   
@@ -136,9 +136,9 @@ module cmdparser (reset, clk, bitin, bitclk, cmd_out, packet_complete_out, cmd_c
   assign cmd_out[7] = (count >= 8 &&  cmd[0] &&  cmd[1] &&  cmd[6] && ~cmd[7] && ~cmd[3]); // Read 11000010
   assign cmd_out[8] = (count >= 8 &&  cmd[0] &&  cmd[1] &&  cmd[6] &&  cmd[7] && ~cmd[3]); // Write 11000011
   ///
-  assign cmd_out[9] = (count >= 8 &&  cmd[0] &&  cmd[1] &&  cmd[6] && ~cmd[7] &&  cmd[3]); //added 11011010
+  assign cmd_out[9] = (count >= 8 &&  cmd[0] &&  cmd[1] &&  cmd[6] && ~cmd[7] &&  cmd[3]); //added 11011010, trns
   ////
-  assign cmd_out[10] = (count >= 8 &&  cmd[0] && cmd[1] && ~cmd[2] &&  cmd[6] &&  cmd[7] && cmd[3]); //11011111
+  assign cmd_out[10] = (count >= 8 &&  cmd[0] && cmd[1] && ~cmd[2] &&  cmd[6] &&  cmd[7] && cmd[3]); //11011111, sampsens
   /////
   assign cmd_out[11] = (count >= 8 &&  cmd[0] && cmd[1] && ~cmd[2] && ~cmd[6] && ~cmd[7] && cmd[3]);//11011000
   assign cmd_out[12] = (count >= 8 &&  cmd[0] && cmd[1] && ~cmd[2] &&  cmd[6] && ~cmd[7] && cmd[3]);//11011110 
@@ -158,4 +158,5 @@ module cmdparser (reset, clk, bitin, bitclk, cmd_out, packet_complete_out, cmd_c
 
 endmodule
 
+  
   
