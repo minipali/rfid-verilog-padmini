@@ -1,4 +1,4 @@
-//final as of 26-03-2023
+//final as of 07-04-2023
 
 
 
@@ -507,7 +507,10 @@ always @ (posedge bitinclk or posedge reset) begin
             end else if (bitincounter == 2) begin
                   bitincounter <= bitincounter + 6'd1;
                   senscode[0] <= bitin;
-            end
+            end else if (bitincounter >= 3 && bitincounter <= 10) begin
+                  bitincounter <= bitincounter + 6'd1;
+                  time_stamp[10-bitincounter] <= bitin;  
+            end   
     /*
             // check the first and middle bits of the handle, for rn16
             end else if (!matchfailed && !lastbit && thisbitmatches) begin
@@ -534,9 +537,11 @@ always @ (posedge bitinclk or posedge reset) begin
             end else if (bitincounter == 3) begin
                   bitincounter <= bitincounter + 6'd1;
                   senscode[0] <= bitin;
-            end else if (bitincounter >= 4 && bitincounter <= 11) begin
-                  bitincounter <= bitincounter + 6'd1;
-                  time_stamp[11-bitincounter] <= bitin;      
+                  
+                  //below stuff for other command
+//            end else if (bitincounter >= 4 && bitincounter <= 11) begin
+//                  bitincounter <= bitincounter + 6'd1;
+//                  time_stamp[11-bitincounter] <= bitin;      
             // check the first and middle bits of the handle, for rn16
             end else if (!matchfailed && !lastbit && thisbitmatches) begin
               handlebitcounter <= handlebitcounter + 4'd1;
