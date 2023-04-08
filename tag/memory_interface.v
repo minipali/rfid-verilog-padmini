@@ -37,7 +37,7 @@ module mem(
 );
 
 reg [5:0]counter_s1,counter_s2;
-reg [5:0] counter_EPC;
+reg [5:0] counter_EPC,counter_EPC_read;
 reg [15:0] StoredCRC, StoredPC, Code1,tx_out; // the first three 16-bit words of EPC 
 reg curr_sl_flag,curr_inven_flag,adc_flag;
 reg [3:0]current_cmd;
@@ -47,6 +47,7 @@ reg [15:0]adc_temp_data,bit_shift_reg;
 reg next_word,words_done;
 reg [3:0] bit_counter;  
 
+reg myflag_ack;
 reg myflag;
 reg myflag_s;
 // commands
@@ -128,7 +129,7 @@ always@(posedge clk)begin
         Code1 = 16'd0; 
         
     end else begin
-        if(counter_EPC == sel_ptr)begin
+        if(counter_EPC == sel_ptr)begin    //need to fix the ptr
            Code1 = EPC_data_in ;
         end else begin
            Code1 = Code1; 
@@ -165,14 +166,15 @@ always@(posedge clk)begin
                    end
                    curr_inven_flag = inven_flag;
                    curr_sl_flag = sl_flag;
-                end //membank //select command
+                end //membank
             end else begin
                 curr_inven_flag = inven_flag;
                 curr_sl_flag = sl_flag;
-         end
+         end  //select command
         
         if(rx_cmd[1])begin   //acknowledge command
             current_cmd = CMD_ACK;
+            counter_EPC_read = counter_EPC;
         end else if(rx_cmd[7])begin  // read command (epc)
             current_cmd = CMD_EPC_READ;
         end else if(rx_cmd[11])begin
@@ -182,6 +184,13 @@ always@(posedge clk)begin
         end else begin
             current_cmd = CMD_RESET;
             myflag = 1'b0;
+            myflag_ack = 1'b0;
+        end
+        
+        if(current_cmd == CMD_ACK && myflag_ack == 1'b0)begin
+            counter_EPC_read = counter_EPC;
+        end else begin
+           counter_EPC_read = counter_EPC_read; 
         end
         
         if(current_cmd == CMD_EPC_READ)begin
@@ -232,12 +241,13 @@ always@(posedge clk)begin
            
        end
         
-       if(current_cmd == CMD_ACK)begin     
+       if(current_cmd == CMD_ACK)begin 
+           myflag_ack = 1'b1;
            if(read_state == STATE_INITIAL)begin
                if(next_word)begin
                  mem_sel = 3'd1;
                  RorW = 2'b01;
-                 mem_address = counter_EPC-6'd1; 
+                 mem_address = counter_EPC_read-6'd1; 
                  PC_B = 1'd0;          
                  read_state = STATE_1;
                 end
@@ -247,14 +257,15 @@ always@(posedge clk)begin
                  tx_out = mem_read_in;
                  read_state = STATE_2;
            end else if(read_state == STATE_2)begin
-                 counter_EPC = counter_EPC -6'd1;               
+                 counter_EPC_read = counter_EPC_read -6'd1;               
                  read_state = STATE_RESET;
            end else begin
-                if(counter_EPC!=6'd0)begin
+               if(counter_EPC_read!=6'd0)begin
                  read_state = STATE_INITIAL;
                  words_done = 1'd0;   
                 end else begin
                  words_done = 1'd1;
+                 myflag_ack = 1'd0;
                 end
                 SE = 1'd0;
                 RorW = 2'd0;
