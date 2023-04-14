@@ -30,7 +30,7 @@ module mem(
     output reg tx_bit_src,
     output reg mem_done,
     output reg sl_flag,inven_flag,
-    output reg [1:0]session,RorW,
+    output reg [1:0]session,
     output reg tx_data_done,
     
     output reg next_word, 
@@ -321,7 +321,6 @@ always@(posedge clk)begin
            if(read_state == STATE_INITIAL)begin
                if(next_word)begin
                  mem_sel = 3'd1;
-                 RorW = 2'b01;
                  mem_address = counter_EPC_read;
                  PC_B = 1'd0;          
                  read_state = STATE_1;
@@ -343,12 +342,10 @@ always@(posedge clk)begin
                 end
                 read_state = STATE_INITIAL;
                 SE = 1'd0;
-                RorW = 2'd0;
            end
         end else if(Read_or_Write == SENSOR1_WRITE && myflag_s == 1'b0)begin 
                if(write_state == STATE_INITIAL)begin
                       mem_sel = 3'd2;
-                      RorW = 2'b10;
                       PC_B = 1'b0;
                       mem_address = counter_s1;
                       write_state = STATE_1;
@@ -364,7 +361,6 @@ always@(posedge clk)begin
                       write_state = STATE_RESET;
 //                      myflag = 1'b1;
                 end else begin
-                      RorW = 2'd0;
                       WE = 1'd0;
                       adc_flag = 1'd0;
                       write_state = STATE_INITIAL;
@@ -374,7 +370,6 @@ always@(posedge clk)begin
         end else if(Read_or_Write == SENSOR2_WRITE && myflag_s == 1'b0 )begin
             if(write_state == STATE_INITIAL)begin
                   mem_sel = 3'd4;
-                  RorW = 2'b10;
                   PC_B = 1'd0;
                   mem_address = counter_s2;  
                   write_state = STATE_1;          
@@ -390,7 +385,6 @@ always@(posedge clk)begin
               
             end else begin
                   WE = 1'd0;
-                  RorW = 2'd0;
                   adc_flag = 1'd0;
                   write_state = STATE_INITIAL;
                   Read_or_Write = RorW_INITIAL;
@@ -399,7 +393,6 @@ always@(posedge clk)begin
          end else if(Read_or_Write == EPC_WRITE  && myflag == 1'b0)begin
             if(write_state == STATE_INITIAL)begin
                   mem_sel = 3'd1;
-                  RorW = 2'b10;
                   PC_B = 1'd0;
                   mem_address = readwriteptr; 
                   write_state = STATE_1;    
@@ -413,7 +406,6 @@ always@(posedge clk)begin
                   write_state = STATE_RESET;
             end else begin
                   WE = 1'd0;
-                  RorW = 2'd0;
                   write_state = STATE_INITIAL;
                   Read_or_Write = RorW_INITIAL;
                   myflag = 1'b1;
@@ -422,7 +414,6 @@ always@(posedge clk)begin
             if(read_state == STATE_INITIAL)begin
                 if(next_word)begin
                   mem_sel = 3'd1;
-                  RorW = 2'b01;
                   mem_address = temp; 
                   PC_B = 1'd0;
                   read_state = STATE_1;
@@ -438,8 +429,9 @@ always@(posedge clk)begin
             end else begin
                 if(temp == temp_low)begin
                   words_done = 1'd1;
-                end 
-                RorW = 2'd0;
+                end else begin
+                    words_done = words_done;
+                end
                 SE = 1'd0;
                 read_state = STATE_INITIAL;
                 next_word = 1'd0;
@@ -448,7 +440,6 @@ always@(posedge clk)begin
             if(read_state == STATE_INITIAL)begin
                 if(next_word)begin
                   mem_sel = 3'd2;
-                  RorW = 2'b01;
                   mem_address = counter_s1-6'd1;
                   PC_B = 1'd0;
                   read_state = STATE_1;
@@ -462,20 +453,18 @@ always@(posedge clk)begin
                   counter_s1 = counter_s1-6'd1;
                   read_state = STATE_RESET;
             end else begin
-                if(counter_s1!=6'd0)begin
-                 read_state = STATE_INITIAL;
-                 words_done = 1'd0;
+                if(counter_s1 == 6'd0)begin    
+                 words_done = 1'd1;
                 end else begin
-                    words_done = 1'd1;
+                    words_done = words_done;
                 end
-                RorW = 2'd0;
                 SE = 1'd0;
+                read_state = STATE_INITIAL;
             end
         end else if(Read_or_Write == SENSOR2_READ)begin     
             if(read_state == STATE_INITIAL)begin
                 if(next_word)begin
                   mem_sel = 3'd4;
-                  RorW = 2'b01;
                   mem_address = counter_s2-6'd1;
                   PC_B = 1'd0;
                   read_state = STATE_1;
@@ -489,13 +478,12 @@ always@(posedge clk)begin
                   counter_s2 = counter_s2-6'd1;                 
                   read_state = STATE_RESET;
             end else begin
-                if(counter_s2!=0)begin
-                 read_state = STATE_INITIAL;
-                 words_done = 1'd0;
+                if(counter_s2 ==0)begin         
+                 words_done = 1'd1;
                 end else begin
-                    words_done = 1'd1;
+                    words_done = words_done;
                 end
-                RorW = 2'd0;
+                read_state = STATE_INITIAL;
                 SE = 1'd0;
             end
         end
