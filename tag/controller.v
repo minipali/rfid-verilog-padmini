@@ -299,7 +299,7 @@ module controller (reset, clk, rx_overflow, rx_cmd, currentrn, currenthandle,
                       end
                 end
                 READ: begin
-                      if (comm_enable && handlematch && ~crc16invalid) begin
+                      if (comm_enable)begin// && handlematch && ~crc16invalid) begin
                         
                         commstate  <= STATE_TX;
                         bitsrcselect     <= bitsrcselect_ADC;
@@ -336,7 +336,7 @@ module controller (reset, clk, rx_overflow, rx_cmd, currentrn, currenthandle,
                      end
                 end
                 SENSDATA: begin
-                     if (comm_enable && handlematch && ~crc16invalid) begin
+                     if (comm_enable)begin// && handlematch && ~crc16invalid) begin
                         commstate  <= STATE_TX;
                         bitsrcselect     <= bitsrcselect_ADC;
                         docrc      <= 1;
