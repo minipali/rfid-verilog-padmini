@@ -1,4 +1,4 @@
-//Final as of 07-04-2023
+//Final as of 08-04-2023
 `timescale 1ns/1ns
 
 
@@ -37,7 +37,7 @@ module cmdparser (reset, clk, bitin, bitclk, cmd_out, packet_complete_out, cmd_c
   wire [4:0] crc5out;
   output reg crc5invalid;
   //module crc5(reset, crcinclk, crcbitin, crcout);
-  crc5check crc5c(reset, crc5reset, bitclk, bitin, crc5out); 
+  crc5check crc5c(crc5reset, bitclk, bitin, crc5out); 
   
   //crc16 checking
   reg crc16reset;
