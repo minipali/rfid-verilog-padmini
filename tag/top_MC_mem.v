@@ -1,4 +1,4 @@
-//final as of 06-04-2023
+//final as of 18-04-2023
 
 
 `timescale 1ns / 1ns
@@ -27,8 +27,8 @@ module top_with_memory(
            output wire [15:0] mem_data_out, //data is given to the memory
            output wire PC_B,WE,SE,
            output wire [5:0] mem_address,  //this will enable WL
-           output wire [1:0] mem_sel,
-           output wire [1:0] RorW,
+           output wire [2:0] mem_sel,
+           
            
            //directly from top
            output wire modout, // regular IO
@@ -108,7 +108,6 @@ module top_with_memory(
                 sel_target,
                 sel_action,
                 sel_ptr,
-                sel_masklen,
                 mask,  
                 readwritebank,
                 readwriteptr, 
@@ -121,6 +120,7 @@ module top_with_memory(
                 mem_read_in,  //data from memory
                 sensor_time_stamp,   
                 membitclk,
+                tx_enable,
             //outputs
                 mem_data_out, //data is given to the memory
                 PC_B,WE,SE,
@@ -130,7 +130,7 @@ module top_with_memory(
                 mem_done,
                 sl_flag,
                 inven_flag,
-                session, RorW,
+                session,
                 memdatadone
                 );       
 //module mem(
