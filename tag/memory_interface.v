@@ -381,7 +381,7 @@ always@(posedge clk)begin
             if(write_state == STATE_INITIAL)begin
                   mem_sel = 3'd1;
                   PC_B = 1'd0;
-                  mem_address = readwriteptr; 
+                  mem_address = counter_EPC; 
                   write_state = STATE_1;    
             end else if(write_state == STATE_1)begin
                   PC_B = 1'd1;
