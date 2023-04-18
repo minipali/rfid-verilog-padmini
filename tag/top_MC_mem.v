@@ -6,7 +6,7 @@
 //////////////////////////////////////////////////////////////////////////////////
 
 
-module top_with_memory(
+module top_MC_mem(
             //top and memory
            input reset, clk, 
            
