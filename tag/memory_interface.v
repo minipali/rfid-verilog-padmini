@@ -31,38 +31,28 @@ module mem(
     output reg mem_done,
     output reg sl_flag,inven_flag,
     output reg [1:0]session,
-    output reg tx_data_done,
-    
-    output reg next_word, 
-     
-    output reg [5:0] counter_EPC,temp,
-    output reg [5:0] Read_or_Write
-    ,output reg [5:0]counter_s1,counter_s2,
-    output reg [3:0]read_state,
-    output reg [3:0] bit_counter,
-    output reg [15:0] bit_shift_reg
+    output reg tx_data_done
 );
 
-//reg [5:0]counter_s1,counter_s2;
+reg [5:0]counter_s1,counter_s2;
 reg [5:0] counter_EPC_read;
 reg words_done_final;
-//reg [5:0] counter_EPC ;
+reg [5:0] counter_EPC ;
 reg [15:0] StoredCRC, StoredPC, Code1;
-//tx_out; // the first three 16-bit words of EPC 
 reg curr_sl_flag,curr_inven_flag,adc_flag;
 reg [3:0]current_cmd;
 reg [3:0]write_state;
+reg [3:0]read_state;
 reg [5:0]temp_low;
-//write_state;
-//reg [5:0]temp;
-//, Read_or_Write
+reg [5:0]temp;
+reg next_word;
 reg [15:0]adc_temp_data;
 reg [15:0] tx_out;
 reg tx_start;
 reg words_done;
-//reg words_done;
-//reg [3:0] bit_counter;  
-//reg tx_data_done;
+reg [3:0] bit_counter;  
+reg [15:0] bit_shift_reg;
+
 
 //flags for command being executed once
 reg myflag_ack; //ack epc whole bank read
@@ -79,7 +69,7 @@ parameter CMD_EPC_READ = 4'd2;
 parameter CMD_SENSOR_READ = 4'd4;
 parameter CMD_EPC_WRITE = 4'd8;
 
-//reg [5:0] Read_or_Write;
+reg [5:0] Read_or_Write;
 parameter RorW_INITIAL = 6'd0;
 parameter EPC_READ = 6'd1;
 parameter SENSOR1_READ = 6'd2;
@@ -96,8 +86,6 @@ parameter STATE_INITIAL = 4'd1;
 parameter STATE_RESET = 4'd2;
 parameter STATE_1 = 4'd4;
 parameter STATE_2 = 4'd8;
-
-
 
 always@(posedge data_clk)begin 
         
@@ -167,8 +155,7 @@ always@(posedge clk)begin
         Read_or_Write = RorW_INITIAL;
         mem_sel = 3'd0;
         mem_address = 6'd0;
-        tx_data_done = 1'b0;
-        RorW = 2'd0;  
+        tx_data_done = 1'b0; 
         Code1 = 16'd0;
         tx_bit_src = 1'b0;
         myflag_read = 1'b0;
@@ -459,6 +446,7 @@ always@(posedge clk)begin
                     words_done = words_done;
                 end
                 SE = 1'd0;
+                next_word = 1'd0;
                 read_state = STATE_INITIAL;
             end
         end else if(Read_or_Write == SENSOR2_READ)begin     
@@ -485,6 +473,7 @@ always@(posedge clk)begin
                 end
                 read_state = STATE_INITIAL;
                 SE = 1'd0;
+                next_word = 1'd0;
             end
         end
     end
