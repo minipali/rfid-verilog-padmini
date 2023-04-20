@@ -408,9 +408,9 @@ always@(posedge clk)begin
             end else if(read_state == STATE_1)begin
                   PC_B = 1'd1;
                   SE = 1'd1;
-                  bit_shift_reg = mem_read_in;
                   read_state = STATE_2;
             end else if(read_state == STATE_2)begin
+                   bit_shift_reg = mem_read_in;
                    temp = temp -8'd1;                  
                   read_state = STATE_RESET;
             end else begin
@@ -434,9 +434,9 @@ always@(posedge clk)begin
             end else if(read_state == STATE_1)begin
                   PC_B = 1'd1;
                   SE = 1'd1;
-                  bit_shift_reg = mem_read_in;
                   read_state = STATE_2;
-            end else if(read_state == STATE_2)begin    
+            end else if(read_state == STATE_2)begin 
+                  bit_shift_reg = mem_read_in;
                   counter_s1 = counter_s1-6'd1;
                   read_state = STATE_RESET;
             end else begin
@@ -460,9 +460,9 @@ always@(posedge clk)begin
             end else if(read_state == STATE_1)begin
                   PC_B = 1'd1;
                   SE = 1'd1;
-                  bit_shift_reg = mem_read_in;
                   read_state = STATE_2;
             end else if(read_state == STATE_2)begin
+                  bit_shift_reg = mem_read_in;
                   counter_s2 = counter_s2-6'd1;                 
                   read_state = STATE_RESET;
             end else begin
