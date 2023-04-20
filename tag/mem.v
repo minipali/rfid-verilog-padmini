@@ -315,9 +315,9 @@ always@(posedge clk)begin
            end else if(read_state == STATE_1)begin
                  PC_B = 1'd1;
                  SE = 1'd1;
-                 bit_shift_reg = mem_read_in;
                  read_state = STATE_2;
            end else if(read_state == STATE_2)begin
+                 bit_shift_reg = mem_read_in;
                  counter_EPC_read = counter_EPC_read -6'd1;               
                  read_state = STATE_RESET;
            end else begin
