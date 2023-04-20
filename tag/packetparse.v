@@ -1,4 +1,4 @@
-//final as of 07-04-2023
+//final as of 20-04-2023
 
 
 
@@ -32,7 +32,7 @@ module packetparse(reset, bitin, bitinclk, packettype, //inputs
                    handlematch, readwritebank, readwriteptr, readwords,
                    writedataout, epc_data_ready,// writedataclk,
                    /// for transmit clk, need calibrate, freq select and rforb - will send to controller
-                   pllenab, freq_channel, rfob,
+                   freq_channel, rfob,
                    //// for sample sens data
                    senscode,
                    ///// for read sample data, bfconst also
@@ -60,7 +60,7 @@ output [2:0] rx_updn;
 
 ///
 output reg rfob;
-output reg pllenab;
+
 output reg [3:0] freq_channel;
 ////
 output reg [2:0] senscode;
@@ -203,7 +203,6 @@ always @ (posedge bitinclk or posedge reset) begin
     readwriteptr     <= 8'd0;
     readwords        <= 8'd0;
     ///
-    pllenab          <= 0;
     freq_channel     <= 4'd0;
     rfob             <= 0; //by default will be either baseband or transmitter frequency
     ////
@@ -475,22 +474,20 @@ always @ (posedge bitinclk or posedge reset) begin
       end
       ///
       TRNS: begin
+          
           if (bitincounter == 0) begin
                 bitincounter <= bitincounter + 6'd1;
-                pllenab <= bitin;
+                freq_channel[3] <= bitin;
           end else if (bitincounter == 1) begin
                 bitincounter <= bitincounter + 6'd1;
-                freq_channel[3] <= bitin;
+                freq_channel[2] <= bitin;
           end else if (bitincounter == 2) begin
                 bitincounter <= bitincounter + 6'd1;
-                freq_channel[2] <= bitin;
+                freq_channel[1] <= bitin;
           end else if (bitincounter == 3) begin
                 bitincounter <= bitincounter + 6'd1;
-                freq_channel[1] <= bitin;
-          end else if (bitincounter == 4) begin
-                bitincounter <= bitincounter + 6'd1;
                 freq_channel[0] <= bitin;
-          end else if (bitincounter == 5) begin//last, 6th count since 6 bits to be parsed
+          end else if (bitincounter == 4) begin//last, 6th count since 6 bits to be parsed
                 bitincounter <= bitincounter + 6'd1;
                 rfob <= bitin;
           end
