@@ -1,4 +1,6 @@
-//Final as of 08-04-2023
+//Final as of 20-04-2023
+
+
 `timescale 1ns/1ns
 
 
@@ -35,14 +37,16 @@ module cmdparser (reset, clk, bitin, bitclk, cmd_out, packet_complete_out, cmd_c
   //crc5 checking  
   reg crc5reset;
   wire [4:0] crc5out;
-  output reg crc5invalid;
+  output wire crc5invalid;
+  assign crc5invalid = packet_complete && (crc5out != 5'd0) && (cmd_out[2]) ;
   //module crc5(reset, crcinclk, crcbitin, crcout);
   crc5check crc5c(crc5reset, bitclk, bitin, crc5out); 
   
   //crc16 checking
   reg crc16reset;
   wire [15:0] crc16out;
-  output reg crc16invalid;
+  output wire crc16invalid;
+  assign crc16invalid = packet_complete && (crc16out!= 16'h1d0f) && (cmd_out[11] || cmd_out[12] || cmd_out[6] || cmd_out[7]);
   //module crc16check(reset, crcinclk, crcbitin, crc);
   crc16check  crc16c(crc16reset, bitclk, bitin, crc16out);
    
@@ -62,9 +66,6 @@ module cmdparser (reset, clk, bitin, bitclk, cmd_out, packet_complete_out, cmd_c
       //crc16
       crc16reset        <= 1;
       
-      crc5invalid <= 0;
-      crc16invalid <= 0;
-    
  
     end else begin
     
@@ -84,18 +85,9 @@ module cmdparser (reset, clk, bitin, bitclk, cmd_out, packet_complete_out, cmd_c
       if(cmd_complete) begin
         if(!cmd_out[2]) crc5reset <= 1;
         
-        if(!(cmd_out[4] || cmd_out[11] || cmd_out[6] || cmd_out[7] || cmd_out[8])) crc16reset <= 1;
+        if(!(cmd_out[11] || cmd_out[12] || cmd_out[6] || cmd_out[7])) crc16reset <= 1;
       end
       
-      if(packet_complete) begin
-        if(cmd_out[2]) begin
-            if(crc5out != 5'd0) crc5invalid <= 1;
-        end
-        
-        if((cmd_out[4] || cmd_out[11] || cmd_out[6] || cmd_out[7] || cmd_out[8])) begin
-            if(crc16out != 16'h1D0F) crc16invalid <= 1;
-        end
-      end
       
     end
   end
@@ -117,7 +109,7 @@ module cmdparser (reset, clk, bitin, bitclk, cmd_out, packet_complete_out, cmd_c
                             (cmd_out[7] && count >= 57) ||  // Read, 58 bits assuming 8 bit pointer
                             (cmd_out[8] && count >= 65))||   // Write
                             ///
-                            (cmd_out[9] && count >= 13) ||   //trans added command 11011010 plus 6 bits
+                            (cmd_out[9] && count >= 12) ||   //trans added command 11011010 plus 6 bits
                             ////
                             (cmd_out[10] && count >= 18)||   //11011111, sample sensor data plus 3 bits 
                             /////
@@ -136,12 +128,12 @@ module cmdparser (reset, clk, bitin, bitclk, cmd_out, packet_complete_out, cmd_c
   assign cmd_out[7] = (count >= 8 &&  cmd[0] &&  cmd[1] &&  cmd[6] && ~cmd[7] && ~cmd[3]); // Read 11000010
   assign cmd_out[8] = (count >= 8 &&  cmd[0] &&  cmd[1] &&  cmd[6] &&  cmd[7] && ~cmd[3]); // Write 11000011
   ///
-  assign cmd_out[9] = (count >= 8 &&  cmd[0] &&  cmd[1] &&  cmd[6] && ~cmd[7] &&  cmd[3]); //added 11011010, trns
+  assign cmd_out[9] = (count >= 8 &&  cmd[0] &&  cmd[1] &&  cmd[6] && ~cmd[7] &&  cmd[3] && ~cmd[2] && ~cmd[5]); //added 11011010, trns
   ////
   assign cmd_out[10] = (count >= 8 &&  cmd[0] && cmd[1] && ~cmd[2] &&  cmd[6] &&  cmd[7] && cmd[3]); //11011111, sampsens
   /////
   assign cmd_out[11] = (count >= 8 &&  cmd[0] && cmd[1] && ~cmd[2] && ~cmd[6] && ~cmd[7] && cmd[3]);//11011000
-  assign cmd_out[12] = (count >= 8 &&  cmd[0] && cmd[1] && ~cmd[2] &&  cmd[6] && ~cmd[7] && cmd[3]);//11011110 
+  assign cmd_out[12] = (count >= 8 &&  cmd[0] && cmd[1] && ~cmd[2] &&  cmd[6] && ~cmd[7] && cmd[3] && cmd[5]);//11011110 
   
                  
                  
