@@ -1,7 +1,7 @@
-//final as of 06-04-2023
+//final as of 20-04-2023
 
 
-`timescale 1ns / 1ps
+`timescale 1ns / 1ns
 
 module mem(
     input wire clk,factory_reset,reset,packetcomplete,
