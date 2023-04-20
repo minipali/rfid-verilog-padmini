@@ -1,4 +1,4 @@
-//final as of 04-04-2023
+//final as of 20-04-2023
 `timescale 1ns/1ns
 
 // Controller module
@@ -51,9 +51,10 @@ module controller (reset, clk, rx_overflow, rx_cmd, currentrn, currenthandle,
                    bitsrcselect, readwriteptr, rx_q, rx_updn,
                    use_q, comm_enable,
                    ///
-                   plloff,
+                   pllenab, osc_enable_pll,
                    ////
-                   crc5invalid, crc16invalid, sel, sl_flag);
+                   crc5invalid, crc16invalid, sel, sl_flag,
+                   bf_dur, backscatter_const, morb_trans, main_or_back);
   
   parameter QUERYREP   = 13'b0000000000001;
   parameter ACK        = 13'b0000000000010;
@@ -76,8 +77,11 @@ module controller (reset, clk, rx_overflow, rx_cmd, currentrn, currenthandle,
   parameter bitsrcselect_UID = 2'd3;
   
   ///
-  parameter PLL_DUR = 150; 
+  parameter PLL_DUR = 250; 
+  parameter OSC_PLL_DUR_TOT = 300;
+  parameter TEN_USEC = 25;
   parameter SAMPSENS_WAIT_DUR = 1000;
+    
    
   input reset, clk, rx_overflow, packet_complete, txsetupdone, tx_done;
   input [12:0] rx_cmd;
@@ -92,7 +96,8 @@ module controller (reset, clk, rx_overflow, rx_cmd, currentrn, currenthandle,
   input handlematch, comm_enable;
   
   ///
-  output reg plloff;
+  output reg pllenab;
+  output reg osc_enable_pll;
   ///
   
   input crc5invalid, crc16invalid;
@@ -102,6 +107,12 @@ module controller (reset, clk, rx_overflow, rx_cmd, currentrn, currenthandle,
   input sl_flag;
   
   
+  //bf_dur for control
+  input [7:0] bf_dur;
+  output reg backscatter_const;
+  
+  input morb_trans;
+  output reg main_or_back;
   
   
 
@@ -193,11 +204,12 @@ module controller (reset, clk, rx_overflow, rx_cmd, currentrn, currenthandle,
       sel_reg   <= 0;
       slotcounter  <= 0;
       storedhandle <= 0;
-      
-      
+      backscatter_const <= 0;
+      main_or_back <= 0;
       ///
       pllwaitcount <= 10'd0;
-      plloff <= 0;
+      pllenab <= 0;
+      osc_enable_pll<=0;
       
     end else if (commstate == STATE_TX) begin
         
@@ -207,6 +219,7 @@ module controller (reset, clk, rx_overflow, rx_cmd, currentrn, currenthandle,
       if(tx_done) begin // tx_done means transmit done, so receiving starts --> transition to receive state
         tx_en     <= 0;
         commstate <= STATE_RX;
+        main_or_back <= 0;
       end else begin
         tx_en <= 1;
       end
@@ -299,7 +312,7 @@ module controller (reset, clk, rx_overflow, rx_cmd, currentrn, currenthandle,
                       end
                 end
                 READ: begin
-                      if (comm_enable)begin// && handlematch && ~crc16invalid) begin
+                      if (comm_enable && handlematch && ~crc16invalid) begin
                         
                         commstate  <= STATE_TX;
                         bitsrcselect     <= bitsrcselect_ADC;
@@ -316,13 +329,24 @@ module controller (reset, clk, rx_overflow, rx_cmd, currentrn, currenthandle,
                      tagisopen   <= 0;
                      
                      //turn off calibration bit after 100us. Some parameter pll_dur for no of clk cycles that equate upto 100us
-                     if(pllwaitcount >= PLL_DUR) begin
-                         plloff <= 1;
+                     //OSC_PLL_DUR_TOT will last 120us, for the 10us padding in the front and the back for pll_enable
+                     if(pllwaitcount >= OSC_PLL_DUR_TOT) begin
+                         osc_enable_pll <= 0;
                          pllwaitcount <= 0;
                          rx_en <= 0;
                      end else begin
+                         osc_enable_pll <= 1;
                          pllwaitcount <= pllwaitcount + 10'd1;
+                         
+                         if(pllwaitcount >= TEN_USEC && pllwaitcount <= OSC_PLL_DUR_TOT - TEN_USEC)begin
+                            pllenab <= 1;
+                         end else begin
+                            pllenab <= 0;
+                         end
                      end
+                     
+                     
+                     
                 end
                 SAMPSENS: begin
                      tagisopen   <= 0;
@@ -336,17 +360,29 @@ module controller (reset, clk, rx_overflow, rx_cmd, currentrn, currenthandle,
                      end
                 end
                 SENSDATA: begin
-                     if (comm_enable)begin// && handlematch && ~crc16invalid) begin
+                     if (comm_enable && handlematch && ~crc16invalid) begin
                         commstate  <= STATE_TX;
                         bitsrcselect     <= bitsrcselect_ADC;
                         docrc      <= 1;
+                        
+                        if(morb_trans) main_or_back <= 1;
+                        
                      end else begin
                         rx_en <= 0;  // reset rx
                      end
                 end
                 BFCONST: begin
                      tagisopen  <= 0;
-                     rx_en <= 0;
+                     
+                     if(handlematch && !crc16invalid)backscatter_const = 1;
+                     
+                     if(pllwaitcount >= 20*bf_dur -1 || pllwaitcount==10'd1023)begin// && ~crc16invalid) begin
+                         backscatter_const = 0;
+                         pllwaitcount <= 0;
+                         rx_en <= 0;
+                     end else begin
+                         pllwaitcount <= pllwaitcount + 10'd1;
+                     end
                 end
                 default begin
                    rx_en <= 0;  // reset rx
