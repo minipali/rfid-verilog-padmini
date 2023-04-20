@@ -1,4 +1,4 @@
-//final as of 26-03-2023
+//final as of 20-04-2023
 `timescale 1ns/1ns
 
 
@@ -28,14 +28,15 @@
            writedataout, epc_data_ready,
            readwritebank, readwriteptr, readwords, membitclk, membitsrc, memdatadone, 
            use_q, comm_enable, tx_enable,
-           debug_clk, debug_out,
+           debug_address, debug_out,
            rx_cmd,
            ///transmit clock
-           pll_enable, freq_channel, rforbase,
+           osc_enable_pll, pll_enable, freq_channel, rforbase,
            ////from sample data
            senscode,
            /////
-           morb_trans, sensor_time_stamp, bf_dur,      
+           morb_trans, sensor_time_stamp,
+           bf_dur, backscatter_const,      
            bitout,
            calibration_control,
            //select
@@ -60,12 +61,14 @@
   output epc_data_ready;
 
   // Debugging IO
-  input  debug_clk;
+  input wire [3:0] debug_address;
   output debug_out;
   
 /**********Additional commands**********/
   
   /// trns: transmit clock command, all connected to packetparse module
+  
+  output wire osc_enable_pll;
   output wire pll_enable; /// final control for pll
   output wire [3:0] freq_channel;
   output wire rforbase;
@@ -73,11 +76,13 @@
   output wire [2:0] senscode;
   
   ///// sensdata: wilo router asks for sensor data
-  output wire morb_trans; //main or backscatter transmitter
+  wire morb_trans_frompp; //main or backscatter transmitter
+  output wire morb_trans;
   output wire [7:0] sensor_time_stamp;
   /// bfconst: ask tag to backscatter at constant frequency
   //output wire freq
   output wire [7:0] bf_dur;
+  output wire backscatter_const;
   
   //for select: sel_target, sel_action, sel_ptr, mask - not using mask length since redundant
   output wire [2:0] sel_target;
@@ -130,7 +135,8 @@
       //crc5, crc16 checks
   wire crc5invalid, crc16invalid;
   
-
+  
+  
   // TX module connections
   wire tx_reset, txsetupdone, tx_done;
 
@@ -163,10 +169,7 @@
   assign rx_reset    = reset | !rx_en;
   assign rxtop_reset = reset | !rx_en;
   
-  /// this is for trns command
-  //mux control for pll on and off
-  wire pllenab;
-  assign pll_enable = (pllenab) & (~plloff);
+
 
   // mux control for transmit data source
   wire [1:0] bitsrcselect;
@@ -235,19 +238,10 @@
 
 
   // Serial debug interface for viewing registers:
-  reg [3:0] debug_address;
   reg debug_out;
-  always @ (posedge debug_clk or posedge reset) begin
-    if(reset) begin
-      debug_address <= 4'd0;
-    end else begin
-      //debug_address <= debug_address + 4'd1;
-      
-/*********CHANGE DEBUG ADDRESS HERE TO VIEW *********/
-      debug_address <= 4'd0; 
-    end
-  end
+ 
   always @ (*) begin // always @ (debug_address) begin // --> there initially
+  
   case(debug_address)
     0:  debug_out = packet_complete;
     1:  debug_out = cmd_complete;
@@ -261,8 +255,8 @@
     9:  debug_out = rx_overflow;
     10: debug_out = tx_done;
     11: debug_out = txsetupdone;
-    12: debug_out = 1'b0;
-    13: debug_out = 1'b1;
+    12: debug_out = crc16invalid;
+    13: debug_out = crc5invalid;
     14: debug_out = 1'b0;
     15: debug_out = 1'b1;
     default: debug_out = 1'b0;
@@ -284,10 +278,11 @@
                     bitsrcselect, readwriteptr, rx_q, rx_updn,
                     use_q, comm_enable,
                     ///
-                    plloff,
+                    pll_enable, osc_enable_pll,
                     ////
                      
-                    crc5invalid, crc16invalid, sel, sl_flag);
+                    crc5invalid, crc16invalid, sel, sl_flag,
+                    bf_dur, backscatter_const, morb_trans_frompp, morb_trans);
 
   txsettings U_SET (reset, trcal_in,  m_in,  dr_in,  trext_in, query_complete,
                            trcal_out, m_out, dr_out, trext_out);
@@ -302,15 +297,29 @@
                       readwritebank, readwriteptr, readwords,
                       writedataout, epc_data_ready,// writedataclk,
                       /// trns
-                      pllenab, freq_channel,rforbase,
+                      freq_channel,rforbase,
                       //// sampsens
                       senscode,
                       ///// sensdata
-                      morb_trans, sensor_time_stamp,
+                      morb_trans_frompp, sensor_time_stamp,
                       // bfconst 
                       bf_dur,
                       sel_target, sel_action, sel_ptr, mask); // not using truncate 
-
+//module packetparse(reset, bitin, bitinclk, packettype, //inputs
+//                   rx_q, sel, rx_updn,
+//                   currenthandle, currentrn, //inputs as well
+//                   handlematch, readwritebank, readwriteptr, readwords,
+//                   writedataout, epc_data_ready,// writedataclk,
+//                   /// for transmit clk, need calibrate, freq select and rforb - will send to controller
+//                   pllenab, freq_channel, rfob,
+//                   //// for sample sens data
+//                   senscode,
+//                   ///// for read sample data, bfconst also
+//                   morb_trans, time_stamp,
+//                   //bfcnst commands, along with freq channel - using freq_chnanel from trns command
+//                   bf_dur,
+//                   //select
+//                   sel_target, sel_action, sel_ptr, mask);
   rng       U_RNG  (tx_reset, reset, rngbitin, rngbitinclk, rngbitclk, rngbitsrc, rngdatadone, currentrn);
   
   
