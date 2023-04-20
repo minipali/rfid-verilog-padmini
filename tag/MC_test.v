@@ -327,7 +327,7 @@ module MC_test();
     
     counter16 c10(.clk(clk), .reset(counterreset), .enable(counterenb), .count(counter), .overflow(overflow));
     
-    top_with_memory top_with_memory_inst(
+    top_MC_mem top_with_memory_inst(
             //top and memory
            reset, clk, 
            
@@ -365,7 +365,7 @@ module MC_test();
            calibration_control,
            packet_complete);
            
-//module top_with_memory(
+//module top_MC_mem(
 //            //top and memory
 //           input reset, clk, 
            
