@@ -1,4 +1,4 @@
-//final as of 18-04-2023
+//final as of 20-04-2023
 
 
 `timescale 1ns / 1ns
@@ -14,7 +14,7 @@ module top_MC_mem(
            input demodin, 
            input use_q,
            input comm_enable,
-           input debug_clk,
+           input [3:0] debug_address,
            
            
            //directly to memory
@@ -34,12 +34,14 @@ module top_MC_mem(
            output wire modout, // regular IO
            output wire tx_enable,
            output wire debug_out,
+           output wire osc_enable_pll,
            output wire pll_enable,
            output wire [3:0] freq_channel,
            output wire rforbase,
            output wire [2:0] senscode,
            output wire morb_trans,
            output wire [7:0] bf_dur,
+           output wire backscatter_const,
            output wire bitout, calibration_control,
            output wire packet_complete);
          
@@ -72,36 +74,38 @@ module top_MC_mem(
            EPC_data_in, EPC_data_ready,
            readwritebank, readwriteptr, readwords, membitclk, membitsrc, memdatadone, 
            use_q, comm_enable, tx_enable,
-           debug_clk, debug_out,
+           debug_address, debug_out,
            rx_cmd,
            ///transmit clock
-           pll_enable, freq_channel, rforbase,
+           osc_enable_pll, pll_enable, freq_channel, rforbase,
            ////from sample data
            senscode,
            /////
-           morb_trans, sensor_time_stamp, bf_dur,      
+           morb_trans, sensor_time_stamp,
+           bf_dur, backscatter_const,      
            bitout,
            calibration_control,
            //select
            sel_target, sel_action, sel_ptr, mask,
            sl_flag, packet_complete);
-//         module top(reset, clk, demodin, modout, // regular IO
+//module top(reset, clk, demodin, modout, // regular IO
 //           writedataout, epc_data_ready,
 //           readwritebank, readwriteptr, readwords, membitclk, membitsrc, memdatadone, 
 //           use_q, comm_enable, tx_enable,
-//           debug_clk, debug_out,
+//           debug_address, debug_out,
 //           rx_cmd,
 //           ///transmit clock
-//           pll_enable, freq_channel, rforbase,
+//           osc_enable_pll, pll_enable, freq_channel, rforbase,
 //           ////from sample data
 //           senscode,
 //           /////
-//           morb_trans, sensor_time_stamp, bf_dur,      
+//           morb_trans, sensor_time_stamp,
+//           bf_dur, backscatter_const,      
 //           bitout,
 //           calibration_control,
 //           //select
 //           sel_target, sel_action, sel_ptr, mask,
-//           sl_flag, packet_complete);           
+//           sl_flag, packet_complete);        
            
      mem m1(clk,factory_reset,reset,packet_complete,
                 rx_cmd,
@@ -139,19 +143,19 @@ module top_MC_mem(
 //    input wire [2:0] sel_target,
 //    input wire [2:0] sel_action,
 //    input wire [7:0] sel_ptr,
-//    input wire [7:0] sel_masklen,
 //    input wire [15:0] mask,  
 //    input wire [1:0] readwritebank,
 //    input wire [7:0] readwriteptr, 
 //    input wire [7:0] readwords,
 //    input wire [15:0]EPC_data_in,
-//    input wire ADC_data_ready,
-//    input wire EPC_data_ready,     
-//    input wire [7:0]ADC_data,
+//    input wire ADC_data_ready, 
+//    input wire EPC_data_ready,    
+//    input wire [7:0] ADC_data,
 //    input wire [2:0]sensor_code, // 3-bit flag to indicate the 3 sensors
 //    input wire [15:0]mem_read_in,  //data from memory
 //    input wire [7:0]sensor_time_stamp,   
 //    input wire data_clk,
+//    input wire tx_enable,
 
 //    output reg [15:0] mem_data_out, //data is given to the memory
 //    output reg PC_B,WE,SE,
@@ -160,7 +164,7 @@ module top_MC_mem(
 //    output reg tx_bit_src,
 //    output reg mem_done,
 //    output reg sl_flag,inven_flag,
-//    output reg [1:0]session,RorW,
+//    output reg [1:0]session,
 //    output reg tx_data_done
 //);
     
