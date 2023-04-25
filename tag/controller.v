@@ -78,7 +78,7 @@ module controller (reset, clk, rx_overflow, rx_cmd, currentrn, currenthandle,
   
   ///
   parameter PLL_DUR = 250; 
-  parameter OSC_PLL_DUR_TOT = 300;
+  parameter OSC_PLL_DUR_TOT = 260;
   parameter TWO_USEC = 5;
   parameter SAMPSENS_WAIT_DUR = 1000;
     
