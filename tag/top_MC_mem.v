@@ -1,4 +1,4 @@
-//final as of 20-04-2023
+//final as of 24-04-2023
 
 
 `timescale 1ns / 1ns
@@ -47,7 +47,7 @@ module top_MC_mem(
          
          
 //from top op to mem ip
-    wire [12:0] rx_cmd;
+    wire [13:0] rx_cmd;
     wire [2:0] sel_target, sel_action;
     wire [7:0] sel_ptr;
     wire [15:0] mask;   
@@ -135,8 +135,7 @@ module top_MC_mem(
                 sl_flag,
                 inven_flag,
                 session,
-                memdatadone
-                );       
+                memdatadone);       
 //module mem(
 //    input wire clk,factory_reset,reset,packetcomplete,
 //    input wire [12:0] rx_cmd,
