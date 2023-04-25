@@ -1,4 +1,4 @@
-//final as of 20-04-2023
+//final as of 24-03-2023
 `timescale 1ns/1ns
 
 
@@ -76,7 +76,7 @@
   output wire [2:0] senscode;
   
   ///// sensdata: wilo router asks for sensor data
-  wire morb_trans_frompp; //main or backscatter transmitter
+  wire morb_trans_on; //main or backscatter transmitter
   output wire morb_trans;
   output wire [7:0] sensor_time_stamp;
   /// bfconst: ask tag to backscatter at constant frequency
@@ -131,7 +131,7 @@
   // CMDPARSE module connections
   output wire packet_complete;
   wire cmd_complete;
-  output wire [12:0] rx_cmd;
+  output wire [13:0] rx_cmd;
       //crc5, crc16 checks
   wire crc5invalid, crc16invalid;
   
@@ -147,7 +147,7 @@
   wire [9:0] trcal_in, trcal_out;
 
   // Signal to tx settings module to store TR modulation settings.
-  parameter QUERY = 13'b000000000100;
+  parameter QUERY = 14'b0000000000100;
   wire query_complete;
   assign query_complete = packet_complete && (rx_cmd==QUERY);
 
@@ -246,18 +246,18 @@
     0:  debug_out = packet_complete;
     1:  debug_out = cmd_complete;
     2:  debug_out = handlematch;
-    3:  debug_out = docrc;
-    4:  debug_out = rx_en;
-    5:  debug_out = tx_en;
-    6:  debug_out = bitout;
+    3:  debug_out = rx_cmd[1];//ack indication
+    4:  debug_out = rx_cmd[2];//query indication
+    5:  debug_out = rx_cmd[4];//select indication
+    6:  debug_out = rx_cmd[8];//write indication
     7:  debug_out = bitclk;
-    8:  debug_out = rngbitin;
+    8:  debug_out = rx_cmd[11];//sensdata indication
     9:  debug_out = rx_overflow;
-    10: debug_out = tx_done;
-    11: debug_out = txsetupdone;
+    10: debug_out = pll_enable;//
+    11: debug_out = morb_trans;//
     12: debug_out = crc16invalid;
     13: debug_out = crc5invalid;
-    14: debug_out = 1'b0;
+    14: debug_out = bitout;//DECODED_IN
     15: debug_out = 1'b1;
     default: debug_out = 1'b0;
   endcase
@@ -282,7 +282,7 @@
                     ////
                      
                     crc5invalid, crc16invalid, sel, sl_flag,
-                    bf_dur, backscatter_const, morb_trans_frompp, morb_trans);
+                    bf_dur, backscatter_const, morb_trans_on, morb_trans);
 
   txsettings U_SET (reset, trcal_in,  m_in,  dr_in,  trext_in, query_complete,
                            trcal_out, m_out, dr_out, trext_out);
@@ -301,7 +301,7 @@
                       //// sampsens
                       senscode,
                       ///// sensdata
-                      morb_trans_frompp, sensor_time_stamp,
+                      morb_trans_on, sensor_time_stamp,
                       // bfconst 
                       bf_dur,
                       sel_target, sel_action, sel_ptr, mask); // not using truncate 
