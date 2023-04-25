@@ -1,11 +1,11 @@
-//final as of 20-04-2023
+//final as of 25-04-2023
 
 
 `timescale 1ns / 1ns
 
 module mem(
     input wire clk,factory_reset,reset,packetcomplete,
-    input wire [12:0] rx_cmd,
+    input wire [13:0] rx_cmd,
     input wire [2:0] sel_target,
     input wire [2:0] sel_action,
     input wire [7:0] sel_ptr,
@@ -61,6 +61,8 @@ reg myflag; // epc write
 reg myflag_s; //sensor read
 
 reg [6:0]read_done_counter;
+wire myclk;
+assign myclk = !data_clk & clk;
 
 // commands, stored as states
 parameter CMD_RESET = 4'd0;
@@ -131,7 +133,7 @@ always@(posedge data_clk)begin
       
 end
 
-always@(posedge clk)begin
+always@(posedge myclk)begin
     if(factory_reset)begin
         counter_EPC = 6'd0;
         counter_s1 = 6'd0;
