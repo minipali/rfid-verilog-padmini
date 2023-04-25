@@ -1,4 +1,4 @@
-//final as of 20-04-2023
+//final as of 24-04-2023
 
 
 
@@ -36,7 +36,7 @@ module packetparse(reset, bitin, bitinclk, packettype, //inputs
                    //// for sample sens data
                    senscode,
                    ///// for read sample data, bfconst also
-                   morb_trans, time_stamp,
+                   morb_trans_on, time_stamp,
                    //bfcnst commands, along with freq channel - using freq_chnanel from trns command
                    bf_dur,
                    //select
@@ -46,7 +46,7 @@ module packetparse(reset, bitin, bitinclk, packettype, //inputs
 //7 inputs
 input reset, bitin, bitinclk;
 ///
-input [12:0]  packettype;
+input [13:0]  packettype;
 
 input [15:0] currenthandle;
 input [15:0] currentrn;
@@ -65,7 +65,7 @@ output reg [3:0] freq_channel;
 ////
 output reg [2:0] senscode;
 /////
-output reg morb_trans; //main or backscatter transmitter
+reg morb_trans; //main or backscatter transmitter
 output reg [7:0] time_stamp;
 output reg [7:0] bf_dur;
 
@@ -76,6 +76,9 @@ output reg [7:0] sel_ptr;
 //output reg [7:0] sel_masklen;
 output reg [15: 0] mask;
 
+
+//morb command
+reg morb_trans_fromcmd;
 reg masklendone;
 
 
@@ -119,7 +122,11 @@ reg       ptrdone;
 reg       ebvdone;
 reg       datadone;
 reg       seldone;
-       
+
+
+
+output wire morb_trans_on;
+assign morb_trans_on = morb_trans_fromcmd || morb_trans;       
 
 assign epc_data_ready = datadone;
 
@@ -146,22 +153,22 @@ wire handlematchout;
 assign handlematchout = handlematch | 
        ((handlebitcounter == 15) && packettype[1] && thisbitmatches);
   
-//the 12 bit command names, rx_cmd or packettype
+//the 14 bit command names, rx_cmd or packettype
 ///
-  parameter QUERYREP   = 13'b0000000000001;
-  parameter ACK        = 13'b0000000000010;
-  parameter QUERY      = 13'b0000000000100;
-  parameter QUERYADJ   = 13'b0000000001000;
-  parameter SELECT     = 13'b0000000010000;
-  parameter NACK       = 13'b0000000100000;
-  parameter REQRN      = 13'b0000001000000;
-  parameter READ       = 13'b0000010000000;
-  parameter WRITE      = 13'b0000100000000;
-  ///                    
-  parameter TRNS       = 13'b0001000000000;
-  parameter SAMPSENS   = 13'b0010000000000;
-  parameter SENSDATA   = 13'b0100000000000;
-  parameter BFCONST    = 13'b1000000000000;
+  parameter QUERYREP   = 14'b00000000000001;
+  parameter ACK        = 14'b00000000000010;
+  parameter QUERY      = 14'b00000000000100;
+  parameter QUERYADJ   = 14'b00000000001000;
+  parameter SELECT     = 14'b00000000010000;
+  parameter NACK       = 14'b00000000100000;
+  parameter REQRN      = 14'b00000001000000;
+  parameter READ       = 14'b00000010000000;
+  parameter WRITE      = 14'b00000100000000;
+  parameter TRNS       = 14'b00001000000000;
+  parameter SAMPSENS   = 14'b00010000000000;
+  parameter SENSDATA   = 14'b00100000000000;
+  parameter BFCONST    = 14'b01000000000000;
+  parameter MORB       = 14'b10000000000000;
   
 
 // gate the write-data clk en to the negative edges
@@ -216,6 +223,7 @@ always @ (posedge bitinclk or posedge reset) begin
     sel_ptr          <= 8'd0;
     //sel_masklen      <= 8'd0;
     mask             <= 16'd0;
+    morb_trans_fromcmd <= 1'b0;
     
 // check for read, write, req_rn, ack
   end else begin
@@ -577,6 +585,11 @@ always @ (posedge bitinclk or posedge reset) begin
             end else if (!handlematch) begin
               matchfailed <= 1;
             end 
+      end
+      MORB: begin
+           if(bitincounter == 0) begin
+             morb_trans_fromcmd <= bitin;
+           end 
       end
       default begin // do nothing. 
         // either cmd is not yet received or we don't need to check handle.
