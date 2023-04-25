@@ -1,4 +1,4 @@
-//final as of 20-04-2023
+//final as of 24-04-2023
 `timescale 1ns/1ns
 
 // Controller module
@@ -54,22 +54,22 @@ module controller (reset, clk, rx_overflow, rx_cmd, currentrn, currenthandle,
                    pllenab, osc_enable_pll,
                    ////
                    crc5invalid, crc16invalid, sel, sl_flag,
-                   bf_dur, backscatter_const, morb_trans, main_or_back);
+                   bf_dur, backscatter_const, morb_trans_on, main_or_back);
   
-  parameter QUERYREP   = 13'b0000000000001;
-  parameter ACK        = 13'b0000000000010;
-  parameter QUERY      = 13'b0000000000100;
-  parameter QUERYADJ   = 13'b0000000001000;
-  parameter SELECT     = 13'b0000000010000;
-  parameter NACK       = 13'b0000000100000;
-  parameter REQRN      = 13'b0000001000000;
-  parameter READ       = 13'b0000010000000;
-  parameter WRITE      = 13'b0000100000000;
-  ///for transmitter wake up bit addition, need to add another bit
-  parameter TRNS       = 13'b0001000000000;
-  parameter SAMPSENS   = 13'b0010000000000;
-  parameter SENSDATA   = 13'b0100000000000;
-  parameter BFCONST    = 13'b1000000000000;
+  parameter QUERYREP   = 14'b00000000000001;
+  parameter ACK        = 14'b00000000000010;
+  parameter QUERY      = 14'b00000000000100;
+  parameter QUERYADJ   = 14'b00000000001000;
+  parameter SELECT     = 14'b00000000010000;
+  parameter NACK       = 14'b00000000100000;
+  parameter REQRN      = 14'b00000001000000;
+  parameter READ       = 14'b00000010000000;
+  parameter WRITE      = 14'b00000100000000;
+  parameter TRNS       = 14'b00001000000000;
+  parameter SAMPSENS   = 14'b00010000000000;
+  parameter SENSDATA   = 14'b00100000000000;
+  parameter BFCONST    = 14'b01000000000000;
+  parameter MORB       = 14'b10000000000000;
 
   parameter bitsrcselect_RNG = 2'd0;
   parameter bitsrcselect_EPC = 2'd1;
@@ -84,7 +84,7 @@ module controller (reset, clk, rx_overflow, rx_cmd, currentrn, currenthandle,
     
    
   input reset, clk, rx_overflow, packet_complete, txsetupdone, tx_done;
-  input [12:0] rx_cmd;
+  input [13:0] rx_cmd;
   input [15:0]  currentrn;
   output [15:0] currenthandle;
   output rx_en, tx_en, docrc; // current_mode 0: rx mode, 1: tx mode
@@ -111,7 +111,7 @@ module controller (reset, clk, rx_overflow, rx_cmd, currentrn, currenthandle,
   input [7:0] bf_dur;
   output reg backscatter_const;
   
-  input morb_trans;
+  input morb_trans_on;
   output reg main_or_back;
   
   
@@ -219,7 +219,7 @@ module controller (reset, clk, rx_overflow, rx_cmd, currentrn, currenthandle,
       if(tx_done) begin // tx_done means transmit done, so receiving starts --> transition to receive state
         tx_en     <= 0;
         commstate <= STATE_RX;
-        main_or_back <= 0;
+        //main_or_back <= 0;
       end else begin
         tx_en <= 1;
       end
@@ -365,7 +365,11 @@ module controller (reset, clk, rx_overflow, rx_cmd, currentrn, currenthandle,
                         bitsrcselect     <= bitsrcselect_ADC;
                         docrc      <= 1;
                         
-                        if(morb_trans) main_or_back <= 1;
+                        if(morb_trans_on)begin
+                            main_or_back <= 1;
+                        end else begin
+                            main_or_back <= 0;
+                        end
                         
                      end else begin
                         rx_en <= 0;  // reset rx
@@ -374,15 +378,24 @@ module controller (reset, clk, rx_overflow, rx_cmd, currentrn, currenthandle,
                 BFCONST: begin
                      tagisopen  <= 0;
                      
-                     if(handlematch && !crc16invalid)backscatter_const = 1;
-                     
-                     if(pllwaitcount >= 20*bf_dur -1 || pllwaitcount==10'd1023)begin// && ~crc16invalid) begin
-                         backscatter_const = 0;
+                     if(handlematch && !crc16invalid)backscatter_const <= 1;
+
+                     //backscatter_const <= 1;
+                     if(pllwaitcount >= (bf_dur<<3) || pllwaitcount==10'd1023)begin// && ~crc16invalid) begin
+                         backscatter_const <= 0;
                          pllwaitcount <= 0;
                          rx_en <= 0;
                      end else begin
                          pllwaitcount <= pllwaitcount + 10'd1;
                      end
+                end
+                MORB: begin
+                    if(morb_trans_on)begin
+                            main_or_back <= 1;
+                        end else begin
+                            main_or_back <= 0;
+                        end
+                    rx_en <= 0;
                 end
                 default begin
                    rx_en <= 0;  // reset rx
