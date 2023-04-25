@@ -1,6 +1,6 @@
-//Final as of 20-04-2023
+//Final as of 24-04-2023
 
-
+//hiiiiii im from 10-4-23, just did it from gittt re
 `timescale 1ns/1ns
 
 
@@ -19,13 +19,13 @@ module cmdparser (reset, clk, bitin, bitclk, cmd_out, packet_complete_out, cmd_c
   input        reset, clk, bitin, bitclk;
   output       packet_complete_out, cmd_complete;
   ///
-  output [12:0] cmd_out;//12 diff commands
+  output [13:0] cmd_out;//14 diff commands
   output [1:0] m;
   output       trext, dr;
 
   reg        packet_complete_out;
   ///
-  wire [12:0] cmd_out;
+  wire [13:0] cmd_out;
   wire       packet_complete, cmd_complete;
   reg  [7:0] cmd;
   wire [7:0] new_cmd;
@@ -114,7 +114,8 @@ module cmdparser (reset, clk, bitin, bitclk, cmd_out, packet_complete_out, cmd_c
                             (cmd_out[10] && count >= 18)||   //11011111, sample sensor data plus 3 bits 
                             /////
                             (cmd_out[11] && count >= 43)||  //read sensor data - 8+1+3+8+32 = 52
-                            (cmd_out[12] && count >= 51); // bfconst
+                            (cmd_out[12] && count >= 51)||
+                            (cmd_out[13] && count >= 8); // bfconst
                             
   
   
@@ -123,7 +124,7 @@ module cmdparser (reset, clk, bitin, bitclk, cmd_out, packet_complete_out, cmd_c
   assign cmd_out[2] = (count >= 4 &&  cmd[0] && ~cmd[1] && ~cmd[2] && ~cmd[3]); // query 1000
   assign cmd_out[3] = (count >= 4 &&  cmd[0] && ~cmd[1] && ~cmd[2] &&  cmd[3]); // QueryAdj 1001
   assign cmd_out[4] = (count >= 4 &&  cmd[0] && ~cmd[1] &&  cmd[2] && ~cmd[3]); // Select 1010
-  assign cmd_out[5] = (count >= 8 &&  cmd[0] &&  cmd[1] && ~cmd[6] && ~cmd[7] && ~cmd[3]); //Nack 11000000
+  assign cmd_out[5] = (count >= 8 &&  cmd[0] &&  cmd[1] && ~cmd[2] && ~cmd[6] && ~cmd[7] && ~cmd[3]); //Nack 11000000
   assign cmd_out[6] = (count >= 8 &&  cmd[0] &&  cmd[1] && ~cmd[6] &&  cmd[7]); // ReqRN 11000001
   assign cmd_out[7] = (count >= 8 &&  cmd[0] &&  cmd[1] &&  cmd[6] && ~cmd[7] && ~cmd[3]); // Read 11000010
   assign cmd_out[8] = (count >= 8 &&  cmd[0] &&  cmd[1] &&  cmd[6] &&  cmd[7] && ~cmd[3]); // Write 11000011
@@ -133,7 +134,9 @@ module cmdparser (reset, clk, bitin, bitclk, cmd_out, packet_complete_out, cmd_c
   assign cmd_out[10] = (count >= 8 &&  cmd[0] && cmd[1] && ~cmd[2] &&  cmd[6] &&  cmd[7] && cmd[3]); //11011111, sampsens
   /////
   assign cmd_out[11] = (count >= 8 &&  cmd[0] && cmd[1] && ~cmd[2] && ~cmd[6] && ~cmd[7] && cmd[3]);//11011000
-  assign cmd_out[12] = (count >= 8 &&  cmd[0] && cmd[1] && ~cmd[2] &&  cmd[6] && ~cmd[7] && cmd[3] && cmd[5]);//11011110 
+  assign cmd_out[12] = (count >= 8 &&  cmd[0] && cmd[1] && ~cmd[2] &&  cmd[6] && ~cmd[7] && cmd[3] && cmd[5]);//11011110
+  
+  assign cmd_out[13] = (count >= 8 &&  cmd[0] && cmd[1] && cmd[2] && ~cmd[3] && ~cmd[4] && ~cmd[5] && ~cmd[6] && ~cmd[7]);//11100000 MORB  
   
                  
                  
