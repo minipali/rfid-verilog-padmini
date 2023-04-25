@@ -79,7 +79,7 @@ module controller (reset, clk, rx_overflow, rx_cmd, currentrn, currenthandle,
   ///
   parameter PLL_DUR = 250; 
   parameter OSC_PLL_DUR_TOT = 300;
-  parameter TEN_USEC = 25;
+  parameter TWO_USEC = 5;
   parameter SAMPSENS_WAIT_DUR = 1000;
     
    
@@ -338,7 +338,7 @@ module controller (reset, clk, rx_overflow, rx_cmd, currentrn, currenthandle,
                          osc_enable_pll <= 1;
                          pllwaitcount <= pllwaitcount + 10'd1;
                          
-                         if(pllwaitcount >= TEN_USEC && pllwaitcount <= OSC_PLL_DUR_TOT - TEN_USEC)begin
+                       if(pllwaitcount >= TWO_USEC && pllwaitcount <= OSC_PLL_DUR_TOT - TWO_USEC)begin
                             pllenab <= 1;
                          end else begin
                             pllenab <= 0;
