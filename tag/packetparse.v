@@ -74,7 +74,7 @@ output reg [2:0] sel_target;
 output reg [2:0] sel_action;
 reg [7:0] sel_ptr;
 //output reg [7:0] sel_masklen;
-output reg [15: 0] mask;
+output reg [15:0] mask;
 
 
 //morb command
@@ -343,7 +343,7 @@ always @ (posedge bitinclk or posedge reset) begin
               end
               else bitincounter <= bitincounter + 6'd1;
 //now comes the mask, 16 bits assume fixed length for now              
-        end else if(masklendone && bitincounter < 15) begin
+        end else if(masklendone && bitincounter <= 15) begin
               bitincounter <= bitincounter + 6'd1;
               mask[~bitincounter[3:0]] <= bitin;
                 
