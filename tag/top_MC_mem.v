@@ -1,4 +1,4 @@
-//final as of 24-04-2023
+//final as of 26-04-2023
 
 
 `timescale 1ns / 1ns
@@ -49,7 +49,6 @@ module top_MC_mem(
 //from top op to mem ip
     wire [13:0] rx_cmd;
     wire [2:0] sel_target, sel_action;
-    wire [7:0] sel_ptr;
     wire [15:0] mask;   
     wire [1:0] readwritebank;
     wire [7:0] readwriteptr;
@@ -86,7 +85,7 @@ module top_MC_mem(
            bitout,
            calibration_control,
            //select
-           sel_target, sel_action, sel_ptr, mask,
+           sel_target, sel_action, mask,
            sl_flag, packet_complete);
 //module top(reset, clk, demodin, modout, // regular IO
 //           writedataout, epc_data_ready,
@@ -111,7 +110,6 @@ module top_MC_mem(
                 rx_cmd,
                 sel_target,
                 sel_action,
-                sel_ptr,
                 mask,  
                 readwritebank,
                 readwriteptr, 
@@ -140,8 +138,7 @@ module top_MC_mem(
 //    input wire clk,factory_reset,reset,packetcomplete,
 //    input wire [12:0] rx_cmd,
 //    input wire [2:0] sel_target,
-//    input wire [2:0] sel_action,
-//    input wire [7:0] sel_ptr,
+//    input wire [2:0] sel_action
 //    input wire [15:0] mask,  
 //    input wire [1:0] readwritebank,
 //    input wire [7:0] readwriteptr, 
