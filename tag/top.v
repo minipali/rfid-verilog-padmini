@@ -1,4 +1,4 @@
-//final as of 24-03-2023
+//final as of 26-03-2023
 `timescale 1ns/1ns
 
 
@@ -40,7 +40,7 @@
            bitout,
            calibration_control,
            //select
-           sel_target, sel_action, sel_ptr, mask,
+           sel_target, sel_action, mask,
            sl_flag, packet_complete);
 
   // Regular IO
@@ -84,10 +84,10 @@
   output wire [7:0] bf_dur;
   output wire backscatter_const;
   
-  //for select: sel_target, sel_action, sel_ptr, mask - not using mask length since redundant
+  //for select: sel_target, sel_action, mask - not using mask length, sel_ptr since redundant
   output wire [2:0] sel_target;
   output wire [2:0] sel_action;
-  output wire [7:0] sel_ptr;
+  
   output wire [15:0] mask;
   input sl_flag;
   
@@ -304,7 +304,7 @@
                       morb_trans_on, sensor_time_stamp,
                       // bfconst 
                       bf_dur,
-                      sel_target, sel_action, sel_ptr, mask); // not using truncate 
+                      sel_target, sel_action, mask); // not using truncate 
 //module packetparse(reset, bitin, bitinclk, packettype, //inputs
 //                   rx_q, sel, rx_updn,
 //                   currenthandle, currentrn, //inputs as well
@@ -319,7 +319,7 @@
 //                   //bfcnst commands, along with freq channel - using freq_chnanel from trns command
 //                   bf_dur,
 //                   //select
-//                   sel_target, sel_action, sel_ptr, mask);
+//                   sel_target, sel_action, mask);
   rng       U_RNG  (tx_reset, reset, rngbitin, rngbitinclk, rngbitclk, rngbitsrc, rngdatadone, currentrn);
   
   
