@@ -1,4 +1,4 @@
-//final as of 24-04-2023
+//final as of 26-04-2023
 
 
 
@@ -40,7 +40,7 @@ module packetparse(reset, bitin, bitinclk, packettype, //inputs
                    //bfcnst commands, along with freq channel - using freq_chnanel from trns command
                    bf_dur,
                    //select
-                   sel_target, sel_action, sel_ptr, mask);
+                   sel_target, sel_action, mask);
 
                    
 //7 inputs
@@ -72,7 +72,7 @@ output reg [7:0] bf_dur;
 //select command
 output reg [2:0] sel_target;
 output reg [2:0] sel_action;
-output reg [7:0] sel_ptr;
+reg [7:0] sel_ptr;
 //output reg [7:0] sel_masklen;
 output reg [15: 0] mask;
 
