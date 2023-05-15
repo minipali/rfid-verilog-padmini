@@ -21,6 +21,11 @@ module mem(
     input wire [7:0]sensor_time_stamp,   
     input wire data_clk,
     input wire tx_enable,
+    
+    input wire inven_flag_in,sl_flag_in,
+    input wire [5:0]Counter_EPC_in,Counter_s1_in,Counter_s2_in,
+    input wire [15:0]Code1_in,
+
 
     output reg [15:0] mem_data_out, //data is given to the memory
     output reg PC_B,WE,SE,
@@ -30,15 +35,17 @@ module mem(
     output reg mem_done,
     output reg sl_flag,inven_flag,
     output reg [1:0]session,
-    output reg tx_data_done
+    output reg tx_data_done,
+    
+    output reg inven_flag_out,sl_flag_out,
+    output reg [5:0]Counter_EPC_out,Counter_s1_out,Counter_s2_out,
+    output reg [15:0]Code1_out
 
 );
 
-reg [5:0]counter_s1,counter_s2;
+
 reg [5:0] counter_EPC_read;
-reg [5:0] counter_EPC ;
-reg [15:0] Code1;
-reg curr_sl_flag,curr_inven_flag,adc_flag;
+reg adc_flag;
 reg [3:0]current_cmd;
 reg [3:0]write_state;
 reg [3:0]read_state;
@@ -53,7 +60,7 @@ reg [15:0] bit_shift_reg;
 
 
 //flags for command being executed once
-reg myflag_ack; //ack epc whole bank read
+reg myflag_epc_write; //ack epc whole bank read
 reg myflag_read; //epc read
 reg myflag; // epc write
 reg myflag_s; //sensor read
@@ -90,15 +97,8 @@ parameter STATE_2 = 4'd8;
 
 always@(posedge clk)begin
   
-    if(factory_reset)begin
-        counter_EPC = 6'd0;
-        counter_s1 = 6'd0;
-        counter_s2 = 6'd0;
-        curr_inven_flag =1'd1;
-        curr_sl_flag =1'd1;
-        sl_flag = 1'd1;  
-        Code1 = 16'd0;
-     end else if(reset)begin
+     if(reset)begin
+        sl_flag = 1'd1;
         bit_counter = 4'd0;
         words_done = 1'd0;   
         mem_data_out = 16'd0;
@@ -126,15 +126,22 @@ always@(posedge clk)begin
         next_word = 1'd0;
         adc_temp_data = 16'd0;
         tx_start = 1'd0;
-        myflag_ack = 1'd0;
         myflag = 1'd0;
+        myflag_epc_write = 1'd0;
         myflag_s = 1'd0;
         data_clk_prev = 1'd0;
         read_done_counter = 7'd0;
         
+        inven_flag_out = 1'd1;
+        sl_flag_out = 1'd1;                         
+        Counter_EPC_out = 6'd0;
+        Counter_s1_out = 6'd0;
+        Counter_s2_out = 6'd0;
+        Code1_out = 16'd0;                                    
+        
     end else begin
         if(clk) begin
-    if(tx_data_done == 1'b1)begin
+            if(tx_data_done == 1'b1)begin
             read_done_counter = read_done_counter + 2'd1;
             end
              
@@ -153,9 +160,9 @@ always@(posedge clk)begin
             end 
     
     //the fixed word that select mask compares to is at ptr = 3 (4th word) --> stored in Code1        
-            if(counter_EPC == 6'd3)begin    //need to fix the ptr
-               Code1 = EPC_data_in;
-            end 
+     //       if(Counter_EPC_out == 6'd3)begin    //need to fix the ptr
+      //         Code1_out = EPC_data_in;          //Pasted this in EPC_write
+       //     end 
             
     //if command is select. packet complete only for 1 clock cycle, within that time operation will be done      
             if(packetcomplete)begin
@@ -168,11 +175,11 @@ always@(posedge clk)begin
                           3'b011: session = 2'b11;
                         endcase
                     
-                        if(mask[15:0] == Code1[15:0])begin // if tag is matching
+                        if(mask[15:0] == Code1_in[15:0])begin // if tag is matching
                             case(sel_action)
                               3'b000:if(sel_target < 3'b100)begin inven_flag = 1'b1; end else if(sel_target == 3'b100)begin sl_flag = 1'b1; end
                               3'b001:if(sel_target < 3'b100)begin inven_flag = 1'b1; end else if(sel_target == 3'b100)begin sl_flag = 1'b1; end
-                              3'b011:if(sel_target < 3'b100)begin inven_flag = !curr_inven_flag; end else if(sel_target == 3'b100)begin sl_flag = !curr_sl_flag; end
+                              3'b011:if(sel_target < 3'b100)begin inven_flag = !inven_flag_in; end else if(sel_target == 3'b100)begin sl_flag = !sl_flag_in; end
                               3'b100:if(sel_target < 3'b100)begin inven_flag = 1'b0; end else if(sel_target == 3'b100)begin sl_flag = 1'b0; end
                               3'b101:if(sel_target < 3'b100)begin inven_flag = 1'b0; end else if(sel_target == 3'b100)begin sl_flag = 1'b0; end
                             endcase
@@ -182,38 +189,43 @@ always@(posedge clk)begin
                               3'b010:if(sel_target < 3'b100)begin inven_flag = 1'b0; end else if(sel_target == 3'b100)begin sl_flag = 1'b0; end
                               3'b100:if(sel_target < 3'b100)begin inven_flag = 1'b1; end else if(sel_target == 3'b100)begin sl_flag = 1'b1; end
                               3'b110:if(sel_target < 3'b100)begin inven_flag = 1'b1; end else if(sel_target == 3'b100)begin sl_flag = 1'b1; end
-                              3'b111:if(sel_target < 3'b100)begin inven_flag = !curr_inven_flag; end else if(sel_target == 3'b100)begin sl_flag = !curr_sl_flag; end
+                              3'b111:if(sel_target < 3'b100)begin inven_flag = !inven_flag_in; end else if(sel_target == 3'b100)begin sl_flag = !sl_flag_in; end
                             endcase
                         end
                        end
-                       curr_inven_flag = inven_flag;
-                       curr_sl_flag = sl_flag;
+                       inven_flag_out = inven_flag;
+                       sl_flag_out = sl_flag;
                     end //membank
                 end else begin
-                    curr_inven_flag = inven_flag;
-                    curr_sl_flag = sl_flag;
+                    inven_flag_out = inven_flag;
+                    sl_flag_out = sl_flag;
              end  //select command
     
     //Rest of the commands assigning current_cmd        
             if(rx_cmd[1])begin   //acknowledge command
                 current_cmd = CMD_ACK;
+                counter_EPC_read = Counter_EPC_in;
+                Counter_EPC_out = Counter_EPC_in;
             end else if(rx_cmd[7])begin  // read command (epc)
                 current_cmd = CMD_EPC_READ;
             end else if(rx_cmd[11])begin
                 current_cmd = CMD_SENSOR_READ;  // sensor read command
+                Counter_s1_out = Counter_s1_in;
+                Counter_s2_out = Counter_s2_in;
             end else if(rx_cmd[8])begin
                 current_cmd = CMD_EPC_WRITE;   //write command (epc)
             end else if (tx_enable == 1'b0)begin // current _cmd needs to be on during the whole transmission part
                 current_cmd = CMD_RESET; // tx_enable used as reset
                 myflag = 1'b0;
-                myflag_ack = 1'b0;
+            end else begin
+                myflag_epc_write = 1'b0;
             end
             
     // ACK - whole bank has to be transmitted, so store the ptr val (counter_EPC),
     // till which we wrote EPC words in counter_EPC_read        
-            if(current_cmd == CMD_ACK && myflag_ack == 1'b0)begin
-                counter_EPC_read = counter_EPC;
-                myflag_ack = 1'b1;
+            if(current_cmd == CMD_EPC_WRITE && myflag_epc_write == 1'b0)begin
+                Counter_EPC_out = Counter_EPC_in;
+                myflag_epc_write = 1'b1;
             end
     
     //Read_or_Write - states stored in this reg. Assigned here       
@@ -279,7 +291,7 @@ always@(posedge clk)begin
                      SE = 1'd1;
                      read_state = STATE_2;
                end else if(read_state == STATE_2)begin
-                    if(counter_EPC == 6'd0)begin
+                    if(Counter_EPC_out == 6'd0)begin
                         bit_shift_reg = 16'd0;
                     end else begin
                         bit_shift_reg = mem_read_in;
@@ -300,7 +312,7 @@ always@(posedge clk)begin
                    if(write_state == STATE_INITIAL)begin
                           mem_sel = 3'd2;
                           PC_B = 1'b0;
-                          mem_address = counter_s1;
+                          mem_address = Counter_s1_in;
                           write_state = STATE_1;
                               
                     end else if(write_state == STATE_1)begin
@@ -309,11 +321,12 @@ always@(posedge clk)begin
                           WE = 1'd1;
                           write_state = STATE_2;
                     end else if(write_state == STATE_2)begin
-                          counter_s1 = counter_s1+6'd1;
+                          Counter_s1_out = Counter_s1_in+6'd1;
                           mem_done = 1'd1;
                           write_state = STATE_RESET;
     //                      myflag = 1'b1;
                     end else begin
+                          mem_done = 1'd0;
                           WE = 1'd0;
                           adc_flag = 1'd0;
                           write_state = STATE_INITIAL;
@@ -324,7 +337,7 @@ always@(posedge clk)begin
                 if(write_state == STATE_INITIAL)begin
                       mem_sel = 3'd4;
                       PC_B = 1'd0;
-                      mem_address = counter_s2;  
+                      mem_address = Counter_s2_in;  
                       write_state = STATE_1;          
                 end else if(write_state == STATE_1)begin
                       PC_B = 1'd1;
@@ -332,11 +345,11 @@ always@(posedge clk)begin
                       WE = 1'd1;
                       write_state = STATE_2;
                 end else if(write_state == STATE_2)begin    
-                      counter_s2 = counter_s2+6'd1;
-                      mem_done = 1;
-                      write_state = STATE_RESET;
-                  
+                      Counter_s2_out = Counter_s2_in+6'd1;
+                      mem_done = 1'd1;
+                      write_state = STATE_RESET;              
                 end else begin
+                      mem_done = 1'd0;
                       WE = 1'd0;
                       adc_flag = 1'd0;
                       write_state = STATE_INITIAL;
@@ -347,7 +360,7 @@ always@(posedge clk)begin
                 if(write_state == STATE_INITIAL)begin
                       mem_sel = 3'd1;
                       PC_B = 1'd0;
-                      mem_address = counter_EPC; 
+                      mem_address = Counter_EPC_out; 
                       write_state = STATE_1;    
                 end else if(write_state == STATE_1)begin
                       PC_B = 1'd1;
@@ -355,9 +368,14 @@ always@(posedge clk)begin
                       WE = 1'd1;
                       write_state = STATE_2;
                 end else if(write_state == STATE_2)begin
-                      counter_EPC = counter_EPC+6'd1;
+                      Counter_EPC_out = Counter_EPC_out +6'd1;
+                      if(Counter_EPC_out == 6'd3)begin    //need to fix the ptr
+                          Code1_out = mem_data_out;
+                      end 
+                      mem_done = 1'd1;
                       write_state = STATE_RESET;
                 end else begin
+                      mem_done = 1'd0;
                       WE = 1'd0;
                       write_state = STATE_INITIAL;
                       Read_or_Write = RorW_INITIAL;
@@ -393,7 +411,7 @@ always@(posedge clk)begin
                 if(read_state == STATE_INITIAL)begin
                     if(next_word)begin
                       mem_sel = 3'd2;
-                      mem_address = counter_s1-6'd1;
+                      mem_address = Counter_s1_out-6'd1;
                       PC_B = 1'd0;
                       read_state = STATE_1;
                      end
@@ -403,10 +421,10 @@ always@(posedge clk)begin
                       read_state = STATE_2;
                 end else if(read_state == STATE_2)begin 
                       bit_shift_reg = mem_read_in;
-                      counter_s1 = counter_s1-6'd1;
+                      Counter_s1_out = Counter_s1_out-6'd1;
                       read_state = STATE_RESET;
                 end else begin
-                    if(counter_s1 == 6'd0)begin    
+                    if(Counter_s1_out == 6'd0)begin    
                      words_done = 1'd1;
                     end else begin
                         words_done = words_done;
@@ -419,7 +437,7 @@ always@(posedge clk)begin
                 if(read_state == STATE_INITIAL)begin
                     if(next_word)begin
                       mem_sel = 3'd4;
-                      mem_address = counter_s2-6'd1;
+                      mem_address = Counter_s2_out-6'd1;
                       PC_B = 1'd0;
                       read_state = STATE_1;
                     end
@@ -429,10 +447,10 @@ always@(posedge clk)begin
                       read_state = STATE_2;
                 end else if(read_state == STATE_2)begin
                       bit_shift_reg = mem_read_in;
-                      counter_s2 = counter_s2-6'd1;                 
+                      Counter_s2_out = Counter_s2_out-6'd1;                 
                       read_state = STATE_RESET;
                 end else begin
-                    if(counter_s2 ==0)begin         
+                    if(Counter_s2_out ==0)begin         
                      words_done = 1'd1;
                     end else begin
                         words_done = words_done;
