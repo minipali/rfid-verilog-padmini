@@ -1,6 +1,5 @@
 //Final as of 24-04-2023
 
-//hiiiiii im from 10-4-23, just did it from gittt re
 `timescale 1ns/1ns
 
 
