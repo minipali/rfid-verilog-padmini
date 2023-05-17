@@ -23,6 +23,10 @@ module top_MC_mem(
            input [7:0] ADC_data, 
            input [15:0] mem_read_in,
            
+           input wire [5:0]Counter_EPC_in,Counter_s1_in,Counter_s2_in,
+           input wire current_inven_flag_in,current_sl_flag_in,
+           input wire [15:0]Code1_in,
+           
            //directly from memory
            output wire [15:0] mem_data_out, //data is given to the memory
            output wire PC_B,WE,SE,
@@ -43,8 +47,11 @@ module top_MC_mem(
            output wire [7:0] bf_dur,
            output wire backscatter_const,
            output wire bitout, calibration_control,
-           output wire packet_complete
+           output wire packet_complete,
            
+           output wire current_inven_flag_out,current_sl_flag_out,
+           output wire [15:0]Code1_out,
+           output wire [5:0]Counter_EPC_out,Counter_s1_out,Counter_s2_out
                
            );
            
@@ -73,14 +80,10 @@ module top_MC_mem(
     wire [1:0] session;
     
 //from mem op to mem_always_on ip
-    wire current_inven_flag_in,current_sl_flag_in;
-    wire [15:0]Code1_in;
-    wire [5:0]Counter_EPC_in,Counter_s1_in,Counter_s2_in;
+    
     
 //from mem_always_on op to mem ip
-    wire [5:0]Counter_EPC_out,Counter_s1_out,Counter_s2_out;
-    wire current_inven_flag_out,current_sl_flag_out;
-    wire [15:0]Code1_out;
+    
  
    
     top topinst(reset, clk, demodin, modout, // regular IO
@@ -139,9 +142,9 @@ module top_MC_mem(
                 .data_clk(membitclk),
                 .tx_enable(tx_enable),
                 
-                .inven_flag_in(current_inven_flag_out),.sl_flag_in(current_sl_flag_out),                       
-                .Counter_EPC_in(Counter_EPC_out),.Counter_s1_in(Counter_s1_out),.Counter_s2_in(Counter_s2_out),
-                .Code1_in(Code1_out),                                 
+                .inven_flag_in(current_inven_flag_in),.sl_flag_in(current_sl_flag_in),                       
+                .Counter_EPC_in(Counter_EPC_in),.Counter_s1_in(Counter_s1_in),.Counter_s2_in(Counter_s2_in),
+                .Code1_in(Code1_in),                                 
                 
                 
             //outputs
@@ -156,9 +159,9 @@ module top_MC_mem(
                 .session(session),
                 .tx_data_done(memdatadone),
                 
-                .inven_flag_out(current_inven_flag_in),.sl_flag_out(current_sl_flag_in),                       
-                .Counter_EPC_out(Counter_EPC_in),.Counter_s1_out(Counter_s1_in),.Counter_s2_out(Counter_s2_in),
-                .Code1_out(Code1_in)                                 
+                .inven_flag_out(current_inven_flag_out),.sl_flag_out(current_sl_flag_out),                       
+                .Counter_EPC_out(Counter_EPC_out),.Counter_s1_out(Counter_s1_out),.Counter_s2_out(Counter_s2_out),
+                .Code1_out(Code1_out)                                 
                 
                );       
 //module mem(
@@ -190,20 +193,19 @@ module top_MC_mem(
 //    output reg [1:0]session,
 //    output reg tx_data_done
 //);
-
-    mem_always_on m2(.rx_cmd(rx_cmd),.packet_complete(packet_complete),.tx_enable(tx_enable),.ADC_data_ready(ADC_data_ready),
-                    .clk(clk),.factory_reset(factory_reset),.current_inven_flag_in(current_inven_flag_in),.current_sl_flag_in(current_sl_flag_in),
-                    .Code1_in(Code1_in),                       
-                    .Counter_EPC_in(Counter_EPC_in),.Counter_s1_in(Counter_s1_in),.Counter_s2_in(Counter_s2_in),
-                    .Counter_EPC_out(Counter_EPC_out),.Counter_s1_out(Counter_s1_out),.Counter_s2_out(Counter_s2_out),
-                    .current_inven_flag_out(current_inven_flag_out),.current_sl_flag_out(current_sl_flag_out),                               
-                    .Code1_out(Code1_out)
-    );
-
+// mem_always_on m2(.rx_cmd(rx_cmd),.packet_complete(packet_complete),.tx_enable(tx_enable),.ADC_data_ready(ADC_data_ready),
+//                    .clk(clk),.factory_reset(factory_reset),.current_sl_flag_in(current_sl_flag_in),
+//                    .Code1_in(Code1_in),                       
+//                    .Counter_EPC_in(Counter_EPC_in),.Counter_s1_in(Counter_s1_in),.Counter_s2_in(Counter_s2_in),
+//                    .Counter_EPC_out(Counter_EPC_out),.Counter_s1_out(Counter_s1_out),.Counter_s2_out(Counter_s2_out),
+//                    .current_sl_flag_out(current_sl_flag_out),                               
+//                    .Code1_out(Code1_out)
+//    );
 //module mem_always_on(
 //input wire [13:0]rx_cmd,
 //input wire packet_complete,tx_enable,ADC_data_ready,
-//input wire clk,factory_reset,current_inven_flag_in,current_sl_flag_in,
+//input wire clk,factory_reset,
+//input wire current_inven_flag_in,current_sl_flag_in,
 //input wire [15:0]Code1_in,
 //input wire [5:0]Counter_EPC_in,Counter_s1_in,Counter_s2_in,
 //output reg [5:0]Counter_EPC_out,Counter_s1_out,Counter_s2_out,
