@@ -79,7 +79,7 @@ end else begin
         Counter_s1 = Counter_s1_in;
         Counter_s2 = Counter_s2_in;
     end     
-//EPC_read and this is for ACK command is independent of Counter_EPC.
+// this is for ACK command.
      if(rx_cmd[1])begin
         Counter_EPC_out = Counter_EPC;   
     end     
