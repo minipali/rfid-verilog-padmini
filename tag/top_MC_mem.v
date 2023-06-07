@@ -1,4 +1,4 @@
-//final as of 15-05-2023
+//final as of 7-06-2023
 
 
 `timescale 1ns / 1ns
@@ -49,6 +49,8 @@ module top_MC_mem(
            output wire bitout, calibration_control,
            output wire packet_complete,
            
+           output wire [13:0]rx_cmd,
+            
            output wire current_inven_flag_out,current_sl_flag_out,
            output wire [15:0]Code1_out,
            output wire [5:0]Counter_EPC_out,Counter_s1_out,Counter_s2_out
@@ -58,7 +60,7 @@ module top_MC_mem(
          
          
 //from top op to mem ip
-    wire [13:0] rx_cmd;
+   // wire [13:0] rx_cmd;
     wire [2:0] sel_target, sel_action;
     wire [15:0] mask;   
     wire [1:0] readwritebank;
