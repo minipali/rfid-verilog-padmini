@@ -1,4 +1,4 @@
-//final as of 15-05-2023
+//final as of 7-06-2023
 
 
 `timescale 1ns / 1ns
@@ -255,7 +255,7 @@ always@(posedge clk)begin
             end
     
     //adc_flag is internal flag.         
-            if(ADC_data_ready)begin //have to wait for one clock cycle
+            if(ADC_data_ready && rx_cmd[10])begin //have to wait for one clock cycle
                 adc_flag = ADC_DATA_READY_FLAG;
             end else begin
                 adc_flag = 1'b0;
