@@ -1,4 +1,4 @@
-//final as of 7-06-2023
+//final as of 15-05-2023
 
 
 `timescale 1ns / 1ns
@@ -18,7 +18,6 @@ module top_MC_mem(
            
            
            //directly to memory
-           input factory_reset,
            input ADC_data_ready, 
            input [7:0] ADC_data, 
            input [15:0] mem_read_in,
@@ -49,18 +48,21 @@ module top_MC_mem(
            output wire bitout, calibration_control,
            output wire packet_complete,
            
-           output wire [13:0]rx_cmd,
-            
            output wire current_inven_flag_out,current_sl_flag_out,
            output wire [15:0]Code1_out,
-           output wire [5:0]Counter_EPC_out,Counter_s1_out,Counter_s2_out
+           output wire [5:0]Counter_EPC_out,Counter_s1_out,Counter_s2_out,
+  
+           output wire rx_cmd_4,
+           output wire rx_cmd_8,
+           output wire rx_cmd_10,
+           output wire rx_cmd_11
                
            );
            
          
          
 //from top op to mem ip
-   // wire [13:0] rx_cmd;
+    wire [13:0] rx_cmd;
     wire [2:0] sel_target, sel_action;
     wire [15:0] mask;   
     wire [1:0] readwritebank;
@@ -77,9 +79,10 @@ module top_MC_mem(
     wire sl_flag;//from memory to top
     
     //redundant
-    wire mem_done;
-    wire inven_flag;
-    wire [1:0] session;
+    assign rx_cmd_4 = rx_cmd[4];
+    assign rx_cmd_8 = rx_cmd[8];
+    assign rx_cmd_10 = rx_cmd[10];
+    assign rx_cmd_11 = rx_cmd[11];
     
 //from mem op to mem_always_on ip
     
@@ -126,7 +129,7 @@ module top_MC_mem(
 //           sel_target, sel_action, sel_ptr, mask,
 //           sl_flag, packet_complete);        
            
-     mem m1(.clk(clk),.factory_reset(factory_reset),.reset(reset),.packetcomplete(packet_complete),
+     mem m1(.clk(clk),.reset(reset),.packetcomplete(packet_complete),
                 .rx_cmd(rx_cmd),
                 .sel_target(sel_target),
                 .sel_action(sel_action),
@@ -155,10 +158,7 @@ module top_MC_mem(
                 .mem_address(mem_address),   //this will enable WL
                 .mem_sel(mem_sel),
                 .tx_bit_src(membitsrc),
-                .mem_done(mem_done),
                 .sl_flag(sl_flag),
-                .inven_flag(inven_flag),
-                .session(session),
                 .tx_data_done(memdatadone),
                 
                 .inven_flag_out(current_inven_flag_out),.sl_flag_out(current_sl_flag_out),                       
