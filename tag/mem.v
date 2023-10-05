@@ -4,7 +4,7 @@
 `timescale 1ns / 1ns
 
 module mem(
-    input wire clk,factory_reset,reset,packetcomplete,
+    input wire clk,reset,packetcomplete,
     input wire [13:0] rx_cmd,
     input wire [2:0] sel_target,
     input wire [2:0] sel_action,
@@ -31,10 +31,8 @@ module mem(
     output reg PC_B,WE,SE,
     output reg [5:0]mem_address,   //this will enable WL
     output reg [2:0]mem_sel,
-    output reg tx_bit_src,
-    output reg mem_done,
-    output reg sl_flag,inven_flag,
-    output reg [1:0]session,
+    output reg tx_bit_src,   
+    output reg sl_flag,
     output reg tx_data_done,
     
     output reg inven_flag_out,sl_flag_out,
@@ -43,7 +41,8 @@ module mem(
 
 );
 
-
+reg mem_done,inven_flag;
+reg [1:0]session;
 reg [5:0] counter_EPC_read;
 reg adc_flag;
 reg [3:0]current_cmd;
