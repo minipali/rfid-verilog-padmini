@@ -35,13 +35,44 @@ module MC_test();
   
   
   
+  // NEW! Only interconnect wires for mem_always_on
+  
+   wire [5:0]Counter_EPC_in,Counter_s1_in,Counter_s2_in;
+   wire current_inven_flag_in,current_sl_flag_in;
+   wire [15:0]Code1_in;
+           
+  
+   wire current_inven_flag_out,current_sl_flag_out;
+   wire [15:0]Code1_out;
+   wire [5:0]Counter_EPC_out,Counter_s1_out,Counter_s2_out;
+
+   wire rx_cmd_4;
+   wire rx_cmd_8;
+   wire rx_cmd_10;
+   wire rx_cmd_11;
+   
+   wire [13:0] rx_cmd;
+   assign rx_cmd[4] = rx_cmd_4;
+   assign rx_cmd[8] = rx_cmd_8;
+   assign rx_cmd[10] = rx_cmd_8;
+   assign rx_cmd[11] = rx_cmd_8;
+   
+   assign rx_cmd[0] = 1'b0;
+   assign rx_cmd[1] = 1'b0;
+   assign rx_cmd[2] = 1'b0;
+   assign rx_cmd[3] = 1'b0;
+   assign rx_cmd[5] = 1'b0;
+   assign rx_cmd[6] = 1'b0;
+   assign rx_cmd[7] = 1'b0;
+   assign rx_cmd[9] = 1'b0;
+   assign rx_cmd[12] = 1'b0;
+   assign rx_cmd[13] = 1'b0;
+   
+      
   
   
   
-  
-  
-  
-  wire [15:0] bit_shift_reg;   
+ 
   //not ops yet
 //  wire [12:0] rx_cmd; 
 //  wire [2:0] sel_target, sel_action; 
@@ -79,20 +110,21 @@ module MC_test();
   wire overflow;
   reg counterreset;
   
-  reg [12:0] command;  
-  parameter QUERYREP   = 13'b0000000000001;
-  parameter ACK        = 13'b0000000000010;
-  parameter QUERY      = 13'b0000000000100;
-  parameter QUERYADJ   = 13'b0000000001000;
-  parameter SELECT     = 13'b0000000010000;//4
-  parameter NACK       = 13'b0000000100000;
-  parameter REQRN      = 13'b0000001000000;//6
-  parameter READ       = 13'b0000010000000;//7
-  parameter WRITE      = 13'b0000100000000;//8
-  parameter TRNS       = 13'b0001000000000;
-  parameter SAMPSENS   = 13'b0010000000000;
-  parameter SENSDATA   = 13'b0100000000000;//11
-  parameter BFCONST    = 13'b1000000000000;
+  reg [13:0] command;  
+  parameter QUERYREP   = 14'b00000000000001;
+  parameter ACK        = 14'b00000000000010;
+  parameter QUERY      = 14'b00000000000100;
+  parameter QUERYADJ   = 14'b00000000001000;
+  parameter SELECT     = 14'b00000000010000;//4
+  parameter NACK       = 14'b00000000100000;
+  parameter REQRN      = 14'b00000001000000;//6
+  parameter READ       = 14'b00000010000000;//7
+  parameter WRITE      = 14'b00000100000000;//8
+  parameter TRNS       = 14'b00001000000000;
+  parameter SAMPSENS   = 14'b00010000000000;
+  parameter SENSDATA   = 14'b00100000000000;//11
+  parameter BFCONST    = 14'b01000000000000;
+  parameter MORB       = 14'b10000000000000;
            
     initial begin
         reset = 1;
@@ -111,8 +143,8 @@ module MC_test();
         
         counterenb = 1;
         counterreset = 1;                           
-        //command = QUERY;
-        command = SELECT;
+        command = QUERY;
+        
         
         #800
         factory_reset = 0;
@@ -120,18 +152,7 @@ module MC_test();
         #800
         reset = 0;
         factory_reset = 0;
-        counterreset = 0;
-        
-        #2000000
-        
-//        command = TRNS;
-//        counterreset = 0;
-//        command = QUERYREP;
-//        counterreset = 0;
-//        #1600000
-        
-        command = QUERY;
-        counterreset = 0;
+        counterreset = 0;        
         
         #1600000
         command = ACK;
@@ -256,7 +277,7 @@ module MC_test();
             demodin = bitquery;  
             if(counter >= 1800) begin 
                 counterreset <=1;
-                command <= 13'd0;
+                command <= 14'd0;
             end    
         end
         else if(counter <= 16'd430 && command == QUERYREP) begin 
@@ -265,7 +286,7 @@ module MC_test();
             demodin = bitqueryrep; 
             if(counter >= 430) begin 
                 counterreset <=1;
-                command <= 13'd0;
+                command <= 14'd0;
             end   
         end
         else if(counter <= 16'd1511 && command == ACK) begin 
@@ -274,7 +295,7 @@ module MC_test();
             demodin = bitack; 
             if(counter >= 1511) begin 
                 counterreset <=1;
-                command <= 13'd0;
+                command <= 14'd0;
             end   
         end
         else if(counter <= 16'd1198 && command == TRNS) begin 
@@ -284,7 +305,7 @@ module MC_test();
             
             if(counter >= 1198) begin 
                 counterreset <=1;
-                command <= 13'd0;
+                command <= 14'd0;
             end   
         end
         else if(counter <= 16'd1582 && command == SAMPSENS) begin 
@@ -294,7 +315,7 @@ module MC_test();
             
             if(counter >= 1582) begin 
                 counterreset <=1;
-                command <= 13'd0;
+                command <= 14'd0;
             end   
         end
         else if(counter <= 16'd3959 && command == SELECT) begin 
@@ -304,7 +325,7 @@ module MC_test();
             
             if(counter >= 3959) begin 
                 counterreset <=1;
-                command <= 13'd0;
+                command <= 14'd0;
             end   
         end
         else if(counter <= 16'd3095 && command == REQRN) begin 
@@ -314,7 +335,7 @@ module MC_test();
             
             if(counter >= 3095) begin 
                 counterreset <=1;
-                command <= 13'd0;
+                command <= 14'd0;
             end   
         end
         else if(counter <= 16'd4535 && command == WRITE) begin 
@@ -324,7 +345,7 @@ module MC_test();
             
             if(counter >= 4535) begin 
                 counterreset <=1;
-                command <= 13'd0;
+                command <= 14'd0;
             end   
         end
         else if(counter <= 16'd4055 && command == READ) begin 
@@ -334,7 +355,7 @@ module MC_test();
             
             if(counter >= 4055) begin 
                 counterreset <=1;
-                command <= 13'd0;
+                command <= 14'd0;
             end   
         end
         else if(counter <= 16'd3479 && command == SENSDATA) begin 
@@ -344,7 +365,7 @@ module MC_test();
             
             if(counter >= 3479) begin 
                 counterreset <=1;
-                command <= 13'd0;
+                command <= 14'd0;
             end   
         end
         else if(counter <= 16'd3863 && command == BFCONST) begin 
@@ -354,7 +375,7 @@ module MC_test();
             
             if(counter >= 3863) begin 
                 counterreset <=1;
-                command <= 13'd0;
+                command <= 14'd0;
             end   
         end
         else demodin =1; 
@@ -375,10 +396,13 @@ module MC_test();
            debug_address,
            
            //directly to memory
-           factory_reset,
            ADC_data_ready, 
            ADC_data, 
            mem_read_in,
+           
+           Counter_EPC_in,Counter_s1_in,Counter_s2_in,
+           current_inven_flag_in,current_sl_flag_in,
+           Code1_in,
            
            //directly from memory
            mem_data_out,
@@ -400,12 +424,31 @@ module MC_test();
            backscatter_const,
            bitout, 
            calibration_control,
-           packet_complete);
+           packet_complete,
+           
+           current_inven_flag_out,current_sl_flag_out,
+           Code1_out,
+           Counter_EPC_out,Counter_s1_out,Counter_s2_out,
+  
+           rx_cmd_4,
+           rx_cmd_8,
+           rx_cmd_10,
+           rx_cmd_11
+           
+           );
 
-//module top_MC_mem(reset, clk, demodin, use_q, comm_enable,
-//     debug_address, factory_reset, ADC_data_ready, ADC_data,
-//     mem_read_in, mem_data_out, PC_B, WE, SE, mem_address, mem_sel,
-//     modout, tx_enable, debug_out, osc_enable_pll, pll_enable,
-//     freq_channel, rforbase, senscode, morb_trans, bf_dur,
-//     backscatter_const, bitout, calibration_control, packet_complete);
+
+mem_always_on mem_always_on_inst(
+            rx_cmd,
+            packet_complete,tx_enable,ADC_data_ready,
+            clk,factory_reset,current_inven_flag_out,current_sl_flag_out,
+            Code1_out,
+            Counter_EPC_out,Counter_s1_out,Counter_s2_out,
+            Counter_EPC_in,Counter_s1_in,Counter_s2_in,
+            current_inven_flag_in,current_sl_flag_in,
+            Code1_in
+            );
+
+
+
 endmodule
